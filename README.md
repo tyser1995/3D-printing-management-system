@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KAI3D — 3D Printing Management System
+
+A full-stack platform for managing a custom 3D printing business — combining an e-commerce storefront, production management, inventory tracking, reporting, and an AI customization lab.
+
+## Tech Stack
+
+- **Framework** — Next.js 16 (App Router)
+- **Database** — Prisma 7 + SQLite (local) / PostgreSQL via Supabase (production)
+- **Auth** — Supabase Auth
+- **Styling** — Tailwind CSS v4
+- **State** — Zustand, TanStack Query
+- **Charts** — Recharts
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Copy the example env file and fill in your values:
+
+```bash
+cp .env.local .env.local
+```
+
+> **Local dev (SQLite):** The default `.env.local` uses SQLite — no server needed. Leave Supabase keys blank to run in Dev Mode.
+
+> **Production:** Set `DATABASE_URL` to your Supabase PostgreSQL connection string and fill in the Supabase auth keys.
+
+### 3. Set up the database
+
+```bash
+npm run db:generate   # generate Prisma client
+npm run db:migrate    # apply migrations
+npm run db:seed       # seed sample data
+```
+
+### 4. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Dev Mode
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set `NEXT_PUBLIC_DEV_MODE=true` in `.env.local` to enable Dev Mode:
 
-## Learn More
+- The login page shows an **"Enter Admin Panel"** shortcut button (no credentials needed)
+- Auth proxy is bypassed — all routes are accessible
+- Sign-out redirects to `/login` without calling Supabase
 
-To learn more about Next.js, take a look at the following resources:
+Set to `false` (or remove) to hide the bypass in production.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:migrate` | Run database migrations |
+| `npm run db:seed` | Seed sample data |
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+  (admin)/        # Admin panel routes
+  (auth)/         # Login, register, forgot password
+  (public)/       # Customer-facing storefront
+  api/            # Route handlers
+components/
+  admin/          # Admin-specific components
+  landing/        # Homepage sections
+  layout/         # Navbar, sidebar, footer
+  ui/             # Shared UI primitives
+lib/
+  prisma/         # Prisma client singleton
+  supabase/       # Supabase client (browser + server)
+  utils/          # Helpers (format, cn, cost)
+prisma/
+  schema.prisma   # Data model
+  seed.ts         # Sample data seeder
+stores/           # Zustand stores (cart, etc.)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Switching to Supabase
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Update `.env.local`:
+
+```env
+DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+NEXT_PUBLIC_SUPABASE_URL=https://[ref].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+3. Run `npm run db:migrate` against the Supabase database

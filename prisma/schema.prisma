@@ -1,0 +1,436 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PRINT_QUEUE
+  PRINTING
+  PRINTED
+  QUALITY_CHECK
+  PACKAGING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum PrintJobStatus {
+  QUEUED
+  PRINTING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+// ─── USER & AUTH ─────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  role      Role     @default(CUSTOMER)
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  wishlist  WishlistItem[]
+  cart      CartItem[]
+
+  @@map("users")
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  label      String  @default("Home")
+  firstName  String
+  lastName   String
+  street     String
+  city       String
+  province   String
+  postalCode String
+  country    String  @default("Philippines")
+  isDefault  Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String?
+  categoryId    String
+  basePrice     Decimal
+  salePrice     Decimal?
+  sku           String   @unique
+  stockQuantity Int      @default(0)
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  weight        Float?
+  dimensions    String?
+  tags          String?  @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category   Category       @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  wishlist   WishlistItem[]
+  cartItems  CartItem[]
+  costConfig CostConfig?
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+// ─── COST CALCULATOR ──────────────────────────────────────────────────────────
+
+model CostConfig {
+  id               String  @id @default(cuid())
+  productId        String  @unique
+  filamentGrams    Float
+  filamentCostPerG Decimal
+  printHours       Float
+  electricityKwh   Float
+  electricityCost  Decimal
+  laborHours       Float
+  laborRatePerHour Decimal
+  packagingCost    Decimal
+  shippingCost     Decimal
+  profitMargin     Float   @default(0.3)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("cost_configs")
+}
+
+// ─── CART & WISHLIST ──────────────────────────────────────────────────────────
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+// ─── ORDERS ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  userId         String
+  addressId      String?
+  status         OrderStatus @default(PENDING)
+  subtotal       Decimal
+  shippingFee    Decimal     @default(0)
+  discount       Decimal     @default(0)
+  total          Decimal
+  notes          String?
+  trackingNumber String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user       User             @relation(fields: [userId], references: [id])
+  address    Address?         @relation(fields: [addressId], references: [id])
+  items      OrderItem[]
+  quotation  Quotation?
+  invoice    Invoice?
+  printJobs  PrintJob[]
+  statusLogs OrderStatusLog[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal
+  totalPrice Decimal
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model OrderStatusLog {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  notes     String?
+  changedBy String?
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_logs")
+}
+
+// ─── QUOTATIONS & INVOICES ────────────────────────────────────────────────────
+
+model Quotation {
+  id          String          @id @default(cuid())
+  orderId     String          @unique
+  quoteNumber String          @unique
+  status      QuotationStatus @default(DRAFT)
+  validUntil  DateTime
+  pdfUrl      String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("quotations")
+}
+
+model Invoice {
+  id            String    @id @default(cuid())
+  orderId       String    @unique
+  invoiceNumber String    @unique
+  pdfUrl        String?
+  paidAt        DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// ─── PRINT QUEUE ──────────────────────────────────────────────────────────────
+
+model Printer {
+  id        String   @id @default(cuid())
+  name      String
+  model     String
+  brand     String   @default("Bambu Lab")
+  isActive  Boolean  @default(true)
+  ipAddress String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  printJobs       PrintJob[]
+  maintenanceLogs MaintenanceLog[]
+
+  @@map("printers")
+}
+
+model PrintJob {
+  id                String         @id @default(cuid())
+  orderId           String
+  printerId         String?
+  status            PrintJobStatus @default(QUEUED)
+  filamentUsedGrams Float?
+  printTimeMinutes  Int?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  notes             String?
+  createdAt         DateTime       @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id])
+  printer Printer? @relation(fields: [printerId], references: [id])
+
+  @@map("print_jobs")
+}
+
+model MaintenanceLog {
+  id          String   @id @default(cuid())
+  printerId   String
+  description String
+  performedBy String?
+  performedAt DateTime @default(now())
+
+  printer Printer @relation(fields: [printerId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_logs")
+}
+
+// ─── FILAMENT INVENTORY ───────────────────────────────────────────────────────
+
+model Supplier {
+  id        String     @id @default(cuid())
+  name      String
+  contact   String?
+  email     String?
+  phone     String?
+  address   String?
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  filaments Filament[]
+
+  @@map("suppliers")
+}
+
+model FilamentMaterial {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  properties  String?
+
+  filaments Filament[]
+
+  @@map("filament_materials")
+}
+
+model Filament {
+  id             String   @id @default(cuid())
+  name           String
+  materialId     String
+  supplierId     String?
+  color          String
+  colorHex       String?
+  weightGrams    Float
+  pricePerKg     Decimal
+  stockGrams     Float    @default(0)
+  lowStockAlertG Float    @default(200)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  material  FilamentMaterial @relation(fields: [materialId], references: [id])
+  supplier  Supplier?        @relation(fields: [supplierId], references: [id])
+  movements StockMovement[]
+
+  @@map("filaments")
+}
+
+model StockMovement {
+  id         String            @id @default(cuid())
+  filamentId String
+  type       StockMovementType
+  grams      Float
+  notes      String?
+  reference  String?
+  createdBy  String?
+  createdAt  DateTime          @default(now())
+
+  filament Filament @relation(fields: [filamentId], references: [id], onDelete: Cascade)
+
+  @@map("stock_movements")
+}
+
+// ─── REVIEWS ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  userId     String
+  rating     Int
+  title      String?
+  body       String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id])
+  replies ReviewReply[]
+
+  @@unique([productId, userId])
+  @@map("reviews")
+}
+
+model ReviewReply {
+  id        String   @id @default(cuid())
+  reviewId  String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_replies")
+}

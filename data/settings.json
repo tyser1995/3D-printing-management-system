@@ -1,0 +1,20 @@
+{
+  "shop": {
+    "name": "Kai3D",
+    "email": "hello@kai3d.ph",
+    "phone": "+63 9XX XXX XXXX",
+    "address": "Philippines"
+  },
+  "costDefaults": {
+    "electricityRate": 12,
+    "laborRate": 75,
+    "profitMargin": 30,
+    "packagingCost": 25
+  },
+  "notifications": {
+    "emailNewOrder": true,
+    "emailLowStock": true,
+    "emailPrintDone": true,
+    "smsOrderShipped": false
+  }
+}

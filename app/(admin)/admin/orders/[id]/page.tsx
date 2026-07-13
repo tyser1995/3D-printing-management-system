@@ -54,15 +54,31 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
         <OrderDetail
           order={{
-            ...order,
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: order.status,
             subtotal: Number(order.subtotal),
             shippingFee: Number(order.shippingFee),
             discount: Number(order.discount),
             total: Number(order.total),
+            notes: order.notes,
+            trackingNumber: order.trackingNumber,
+            createdAt: order.createdAt,
+            deletedAt: order.deletedAt,
+            user: order.user,
+            address: order.address,
+            statusLogs: order.statusLogs,
             items: order.items.map((item) => ({
-              ...item,
+              id: item.id,
+              quantity: item.quantity,
               unitPrice: Number(item.unitPrice),
               totalPrice: Number(item.totalPrice),
+              product: {
+                id: item.product.id,
+                name: item.product.name,
+                sku: item.product.sku,
+                images: item.product.images,
+              },
             })),
           }}
         />

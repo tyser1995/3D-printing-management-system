@@ -2,6 +2,8 @@
 
 A full-stack platform for managing a custom 3D printing business — combining an e-commerce storefront, production management, inventory tracking, reporting, and an AI customization lab.
 
+See [CHANGELOG.md](./CHANGELOG.md) for recent changes.
+
 ## Tech Stack
 
 - **Framework** — Next.js 16 (App Router)
@@ -81,14 +83,30 @@ components/
   layout/         # Navbar, sidebar, footer
   ui/             # Shared UI primitives
 lib/
-  prisma/         # Prisma client singleton
+  prisma/         # Prisma client singleton, backup/export-import, SKU generator, Supabase sync client
   supabase/       # Supabase client (browser + server)
+  settings.ts     # Reads data/settings.json (shop info, cost defaults, display toggles)
   utils/          # Helpers (format, cn, cost)
 prisma/
   schema.prisma   # Data model
   seed.ts         # Sample data seeder
+data/
+  settings.json     # Shop settings, cost defaults, notification & data-visibility preferences
+  sample-data.json  # Bundled demo dataset toggled on/off from Settings
 stores/           # Zustand stores (cart, etc.)
 ```
+
+## Settings & Admin Data Management
+
+The Settings page (`/admin/settings`) covers more than shop info:
+
+- **Product Categories** — add, edit, and delete categories inline.
+- **Data Visibility** — "Show deleted orders" / "Show deleted products" (both off by default). Deleting a cancelled order or a product hides it from its list rather than destroying it; these toggles reveal it again.
+- **Sample Data** — load or remove the bundled demo dataset (`data/sample-data.json`) without disturbing your own data.
+- **Data Backup** — export the full database to a JSON file, or import one to restore it (this replaces all current data — confirmed before running).
+- **Cloud Sync** — push or pull a live copy of your data to/from Supabase without leaving the app (see below).
+
+New products auto-generate their SKU, continuing whichever prefix a category already uses (`KCH-001` → `KCH-002`); a brand-new category derives a prefix from its name.
 
 ## Switching to Supabase
 
@@ -103,3 +121,13 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 3. Run `npm run db:migrate` against the Supabase database
+
+## Cloud Sync (without switching `DATABASE_URL`)
+
+To push/pull data to Supabase while still running locally on SQLite, set a second, independent connection string:
+
+```env
+SUPABASE_SYNC_DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+```
+
+Then use **Push to Supabase** / **Pull from Supabase** in Settings → Cloud Sync. Push overwrites Supabase with your current data; pull overwrites your current data with what's on Supabase — both are confirmed before running since they replace the target's full dataset.

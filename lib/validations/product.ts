@@ -10,7 +10,7 @@ export const productSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   basePrice: z.coerce.number().positive('Price must be positive'),
   salePrice: z.coerce.number().positive().optional(),
-  sku: z.string().min(1, 'SKU is required'),
+  sku: z.string().optional(),
   stockQuantity: z.coerce.number().int().min(0),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),

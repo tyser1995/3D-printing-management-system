@@ -66,6 +66,7 @@ interface Order {
   notes: string | null
   trackingNumber: string | null
   createdAt: string | Date
+  deletedAt: string | Date | null
   user: { id: string; name: string | null; email: string; phone: string | null }
   address: {
     firstName: string
@@ -84,6 +85,7 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
   const [order, setOrder] = useState(initialOrder)
   const [advancing, setAdvancing] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -107,6 +109,8 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
           ],
         }))
         router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to update order status')
       }
     } finally {
       setAdvancing(false)
@@ -117,14 +121,44 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
     if (!confirm('Cancel this order?')) return
     setCancelling(true)
     try {
-      await fetch(`/api/orders/${order.id}/status`, {
+      const res = await fetch(`/api/orders/${order.id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'CANCELLED', notes: 'Cancelled by admin' }),
       })
-      setOrder((prev) => ({ ...prev, status: 'CANCELLED' }))
+      const json = await res.json()
+      if (res.ok) {
+        setOrder((prev) => ({
+          ...prev,
+          status: 'CANCELLED',
+          statusLogs: [
+            ...prev.statusLogs,
+            { ...json.data.log, createdAt: new Date(json.data.log.createdAt) },
+          ],
+        }))
+        router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to cancel order')
+      }
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const deleteOrder = async () => {
+    if (!confirm('Delete this cancelled order? It will be hidden from the Orders list.')) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (res.ok) {
+        router.push('/admin/orders')
+        router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to delete order')
+      }
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -152,8 +186,18 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
                 Cancel
               </Button>
             )}
+            {order.status === 'CANCELLED' && !order.deletedAt && (
+              <Button size="sm" variant="outline" loading={deleting} onClick={deleteOrder}>
+                Delete
+              </Button>
+            )}
           </div>
         </div>
+        {order.deletedAt && (
+          <p className="-mt-4 text-sm text-slate-400">
+            This order was deleted and is hidden from the Orders list.
+          </p>
+        )}
 
         {/* Items */}
         <Card padding="none">

@@ -37,6 +37,7 @@ export default function ProductFormModal({
   title,
   submitLabel,
 }: Props) {
+  const isEditing = initial?.sku !== undefined
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -141,20 +142,23 @@ export default function ProductFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="SKU"
-              value={form.sku}
-              onChange={set('sku')}
-              required
-              placeholder="KC-001"
-            />
+          <div className={isEditing ? 'grid grid-cols-2 gap-4' : ''}>
+            {isEditing && (
+              <Input
+                label="SKU"
+                value={form.sku}
+                onChange={set('sku')}
+                required
+                placeholder="KC-001"
+              />
+            )}
             <Input
               label="Stock Quantity"
               type="number"
               min="0"
               value={form.stockQuantity}
               onChange={set('stockQuantity')}
+              hint={!isEditing ? 'SKU will be generated automatically' : undefined}
             />
           </div>
 

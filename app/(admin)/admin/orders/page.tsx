@@ -1,31 +1,18 @@
-import Link from 'next/link'
-import { Search } from 'lucide-react'
 import AdminHeader from '@/components/layout/AdminHeader'
-import Card from '@/components/ui/Card'
-import Badge from '@/components/ui/Badge'
 import { prisma } from '@/lib/prisma/client'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { getSettings } from '@/lib/settings'
+import OrdersClient from './OrdersClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Orders | Admin' }
 
-const STATUS_COLORS: Record<
-  string,
-  'success' | 'warning' | 'info' | 'danger' | 'primary' | 'default'
-> = {
-  DELIVERED: 'success',
-  PRINTING: 'info',
-  PENDING: 'warning',
-  SHIPPED: 'primary',
-  CONFIRMED: 'default',
-  IN_PRINT_QUEUE: 'info',
-  QUALITY_CHECK: 'warning',
-  CANCELLED: 'danger',
-}
-
 export default async function AdminOrdersPage() {
-  const [orders, summary] = await Promise.all([
+  const settings = await getSettings()
+  const showDeleted = settings.display?.showDeletedOrders ?? false
+
+  const [orders, summary, customers, products] = await Promise.all([
     prisma.order.findMany({
+      where: showDeleted ? {} : { deletedAt: null },
       include: {
         user: { select: { name: true, email: true } },
         address: { select: { city: true, province: true } },
@@ -37,6 +24,16 @@ export default async function AdminOrdersPage() {
     prisma.order.groupBy({
       by: ['status'],
       _count: true,
+    }),
+    prisma.user.findMany({
+      where: { role: 'CUSTOMER' },
+      select: { id: true, name: true, email: true, phone: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, basePrice: true, salePrice: true, sku: true },
+      orderBy: { name: 'asc' },
     }),
   ])
 
@@ -69,18 +66,6 @@ export default async function AdminOrdersPage() {
       <AdminHeader title="Orders" />
 
       <div className="flex-1 overflow-y-auto p-6">
-        {/* Toolbar */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              placeholder="Search orders..."
-              className="h-9 w-64 rounded-lg border border-slate-200 bg-white pr-4 pl-9 text-sm focus:border-orange-400 focus:outline-none"
-            />
-          </div>
-        </div>
-
         {/* Summary cards */}
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {summaryCards.map(({ label, status, color }) => (
@@ -91,71 +76,27 @@ export default async function AdminOrdersPage() {
           ))}
         </div>
 
-        <Card padding="none">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50">
-                  {['Order #', 'Customer', 'Items', 'Total', 'Status', 'Date', 'Ship To'].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {orders.map((order) => (
-                  <tr key={order.id} className="cursor-pointer hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="font-mono text-sm font-semibold text-orange-600 hover:underline"
-                      >
-                        {order.orderNumber}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                      {order.user.name ?? order.user.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {order._count.items} item{order._count.items !== 1 ? 's' : ''}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                      {formatCurrency(Number(order.total))}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={STATUS_COLORS[order.status] ?? 'default'}>
-                        {order.status.replace(/_/g, ' ')}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {formatDate(String(order.createdAt), {
-                        month: 'short',
-                        day: 'numeric',
-                        year: undefined,
-                      })}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {order.address ? `${order.address.city}, ${order.address.province}` : '—'}
-                    </td>
-                  </tr>
-                ))}
-                {orders.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                      No orders yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <OrdersClient
+          initialOrders={orders.map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            status: o.status,
+            total: Number(o.total),
+            createdAt: o.createdAt,
+            deletedAt: o.deletedAt,
+            user: o.user,
+            address: o.address,
+            _count: o._count,
+          }))}
+          customers={customers}
+          products={products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            basePrice: Number(p.basePrice),
+            salePrice: p.salePrice === null ? null : Number(p.salePrice),
+          }))}
+        />
       </div>
     </div>
   )

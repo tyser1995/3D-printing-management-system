@@ -29,6 +29,7 @@ export default async function AdminDashboardPage() {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const chartRangeStart = new Date(now.getFullYear(), now.getMonth() - 6, 1)
 
   const [
     totalRevenue,
@@ -40,6 +41,7 @@ export default async function AdminDashboardPage() {
     recentOrders,
     activePrintJobs,
     lowStockFilaments,
+    chartOrders,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: { status: { notIn: ['CANCELLED', 'RETURNED'] } },
@@ -87,7 +89,27 @@ export default async function AdminDashboardPage() {
         orderBy: { stockGrams: 'asc' },
       })
       .then((f) => f.filter((x) => x.stockGrams < x.lowStockAlertG).slice(0, 3)),
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: chartRangeStart },
+        status: { notIn: ['CANCELLED', 'RETURNED'] },
+      },
+      select: { total: true, createdAt: true },
+    }),
   ])
+
+  const chartData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 6 + i, 1)
+    const monthOrders = chartOrders.filter(
+      (o) =>
+        o.createdAt.getFullYear() === d.getFullYear() && o.createdAt.getMonth() === d.getMonth()
+    )
+    return {
+      month: d.toLocaleDateString('en-US', { month: 'short' }),
+      revenue: monthOrders.reduce((sum, o) => sum + Number(o.total), 0),
+      orders: monthOrders.length,
+    }
+  })
 
   const thisMonthRevenue = Number(totalRevenue._sum.total ?? 0)
   const prevRevenue = Number(lastMonthRevenue._sum.total ?? 0)
@@ -157,7 +179,7 @@ export default async function AdminDashboardPage() {
                 </div>
               }
             >
-              <SalesChart />
+              <SalesChart data={chartData} />
             </Suspense>
           </Card>
 

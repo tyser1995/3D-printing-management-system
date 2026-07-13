@@ -70,6 +70,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             total: Number(order.total),
             notes: order.notes,
             trackingNumber: order.trackingNumber,
+            printedPhotoUrl: order.printedPhotoUrl,
             createdAt: order.createdAt,
             deletedAt: order.deletedAt,
             user: order.user,

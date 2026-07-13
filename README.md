@@ -116,6 +116,7 @@ From an order's detail page (`/admin/orders/[id]`) an admin can:
 - **Edit** — change line items/quantities, shipping fee, discount, tracking number, and notes (blocked once an order is cancelled, delivered, or deleted)
 - **Delete** a cancelled order — a soft delete; hidden from the Orders list unless "Show deleted orders" is on in Settings
 - View **Notes** and add/edit the **Ship To** address inline
+- Add an optional **Printed Photo** once the order reaches "Printed" or later in the pipeline
 
 Products, Orders, and Customers lists all paginate at 10 rows per page.
 

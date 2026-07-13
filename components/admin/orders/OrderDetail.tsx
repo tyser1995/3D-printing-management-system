@@ -2,14 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Package, User, Pencil } from 'lucide-react'
+import { MapPin, Package, User, Pencil, ImageIcon } from 'lucide-react'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import OrderStatusStepper from './OrderStatusStepper'
 import EditOrderModal from './EditOrderModal'
 import EditAddressModal from './EditAddressModal'
+import EditPhotoModal from './EditPhotoModal'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+
+const STATUS_ORDER = [
+  'PENDING',
+  'CONFIRMED',
+  'IN_PRINT_QUEUE',
+  'PRINTING',
+  'PRINTED',
+  'QUALITY_CHECK',
+  'PACKAGING',
+  'SHIPPED',
+  'DELIVERED',
+]
 
 const STATUS_COLORS: Record<
   string,
@@ -67,6 +80,7 @@ interface Order {
   total: number | string
   notes: string | null
   trackingNumber: string | null
+  printedPhotoUrl: string | null
   createdAt: string | Date
   deletedAt: string | Date | null
   user: { id: string; name: string | null; email: string; phone: string | null }
@@ -104,9 +118,13 @@ export default function OrderDetail({
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
+  const [editingPhoto, setEditingPhoto] = useState(false)
 
   const isEditable =
     order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && !order.deletedAt
+
+  const hasBeenPrinted =
+    STATUS_ORDER.indexOf(order.status) >= STATUS_ORDER.indexOf('PRINTED') || !!order.printedPhotoUrl
 
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -346,6 +364,36 @@ export default function OrderDetail({
             <p className="mt-1 text-sm whitespace-pre-wrap text-slate-900">{order.notes}</p>
           </Card>
         )}
+
+        {/* Printed Photo (optional) */}
+        {hasBeenPrinted && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ImageIcon className="h-4 w-4" /> Printed Photo
+              </CardTitle>
+              {!order.deletedAt && (
+                <button
+                  onClick={() => setEditingPhoto(true)}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  title={order.printedPhotoUrl ? 'Change photo' : 'Add photo'}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </CardHeader>
+            {order.printedPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={order.printedPhotoUrl}
+                alt="Finished print"
+                className="max-h-72 w-full rounded-lg object-contain"
+              />
+            ) : (
+              <p className="text-sm text-slate-400">No photo added yet</p>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Right — timeline */}
@@ -397,6 +445,19 @@ export default function OrderDetail({
           onSaved={(address) => {
             setOrder((prev) => ({ ...prev, address }))
             setEditingAddress(false)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {editingPhoto && (
+        <EditPhotoModal
+          orderId={order.id}
+          initialPhotoUrl={order.printedPhotoUrl}
+          onClose={() => setEditingPhoto(false)}
+          onSaved={(photoUrl) => {
+            setOrder((prev) => ({ ...prev, printedPhotoUrl: photoUrl }))
+            setEditingPhoto(false)
             router.refresh()
           }}
         />

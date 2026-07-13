@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - **Pagination** — Products, Orders, and Customers admin lists now paginate at 10 rows per page, with a shared `Pagination` component and `usePagination` hook. Also wired up the Orders and Customers search boxes, which previously had no `value`/`onChange` at all.
 - **Order notes are now viewable** — a "Notes" card on the order detail page displays `order.notes` whenever present. This data existed already but was never rendered anywhere.
 - **Ship To is now editable** — a pencil icon on the Ship To card opens a form (name, street, city, province, postal code). Creates a new address and links it to the order if none exists yet, or updates the existing one. Blocked only once an order is soft-deleted. (`EditAddressModal.tsx`, `PATCH /api/orders/[id]/address`)
+- **Optional printed photo** — once an order reaches "Printed" (or later) in the pipeline, a "Printed Photo" card appears on the order detail page where you can add a photo URL of the finished print. Entirely optional — the card doesn't show before that stage unless a photo was already added. (`EditPhotoModal.tsx`, `PATCH /api/orders/[id]/photo`, `Order.printedPhotoUrl`)
 
 ### Fixed
 
@@ -36,3 +37,4 @@ All notable changes to this project are documented in this file.
 ### Database
 
 - Added `Order.deletedAt` (nullable) via migration `20260713081940_add_order_deleted_at`.
+- Added `Order.printedPhotoUrl` (nullable) via migration `20260713132227_add_order_printed_photo_url`.

@@ -92,7 +92,7 @@ prisma/
   seed.ts         # Sample data seeder
 data/
   settings.json     # Shop settings, cost defaults, notification & data-visibility preferences
-  sample-data.json  # Bundled demo dataset toggled on/off from Settings
+  sample-data.json  # Local-only data snapshot toggled on/off from Settings (gitignored — not shipped in the repo)
 stores/           # Zustand stores (cart, etc.)
 ```
 
@@ -102,7 +102,7 @@ The Settings page (`/admin/settings`) covers more than shop info:
 
 - **Product Categories** — add, edit, and delete categories inline.
 - **Data Visibility** — "Show deleted orders" / "Show deleted products" (both off by default). Deleting a cancelled order or a product hides it from its list rather than destroying it; these toggles reveal it again.
-- **Sample Data** — load or remove the bundled demo dataset (`data/sample-data.json`) without disturbing your own data.
+- **Sample Data** — load or remove a local data snapshot (`data/sample-data.json`) without disturbing whatever else is currently in the database. This file is gitignored — it's a local convenience snapshot, not something bundled with the repo, so a fresh clone won't have one until you create it (e.g. via Data Backup export, renamed to `data/sample-data.json`).
 - **Data Backup** — export the full database to a JSON file, or import one to restore it (this replaces all current data — confirmed before running).
 - **Cloud Sync** — push or pull a live copy of your data to/from Supabase without leaving the app (see below).
 

@@ -9,7 +9,7 @@ All notable changes to this project are documented in this file.
 - **Manual order entry** — "New Order" button on the Orders admin page. Pick an existing customer or add a new one inline, add product line items, set shipping/discount, and submit. (`app/api/admin/orders`, `app/api/admin/customers`, `OrdersClient.tsx`)
 - **Product categories management** — add, edit, and delete product categories directly from Settings, backed by the `Category` table. (`app/api/admin/categories`, `CategoriesManager.tsx`)
 - **SKU auto-increment** — new products no longer require a manually-typed SKU. The next SKU continues whatever prefix a category is already using (e.g. `KCH-001`, `KCH-002` → `KCH-003`); a brand-new category derives a prefix from its name. (`lib/prisma/sku.ts`)
-- **Sample data toggle** — a Settings switch to load or remove the bundled demo dataset (`data/sample-data.json`) without touching real data you've entered. Removing it skips any record still referenced by your own data instead of failing outright. (`app/api/admin/sample-data`, `SampleDataManager.tsx`)
+- **Sample data toggle** — a Settings switch to load or remove a local data snapshot (`data/sample-data.json`) without touching whatever else is currently in the database. Removing it skips any record still referenced by your own data instead of failing outright. (`app/api/admin/sample-data`, `SampleDataManager.tsx`)
 - **Data backup (export/import)** — download a full JSON snapshot of the database, or restore one, always targeting whichever database `DATABASE_URL` currently points to. (`app/api/admin/backup`, `lib/prisma/backup.ts`, `BackupManager.tsx`)
 - **Cloud sync (Supabase push/pull)** — a second, independent database connection (`SUPABASE_SYNC_DATABASE_URL`) lets you push local data to Supabase or pull Supabase data down, without leaving the app or downloading a file. (`app/api/admin/sync`, `lib/prisma/supabaseSync.ts`)
 - **Data visibility settings** — "Show deleted orders" and "Show deleted products" toggles (both off by default) reveal soft-deleted records in their respective admin lists. (`DataVisibilityManager.tsx`, `lib/settings.ts`)
@@ -30,6 +30,8 @@ All notable changes to this project are documented in this file.
 ### Changed
 
 - **Products list hides deactivated products by default.** Previously, deleting a product (which deactivates it) still left it visible in the admin list with an "Inactive" badge. It's now hidden unless "Show deleted products" is enabled in Settings.
+- **`data/sample-data.json` is now gitignored.** It's a local data snapshot, not a demo dataset meant to ship with the repo — untracked (`git rm --cached`) so it's no longer version-controlled, though it stays on disk and the Sample Data toggle still reads it locally.
+- **`.claude/settings.local.json` is now gitignored** (it was already listed in `.gitignore` but had been committed previously, so it kept showing as tracked) — untracked the same way.
 
 ### Database
 

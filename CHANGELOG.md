@@ -19,6 +19,9 @@ All notable changes to this project are documented in this file.
 - **Order notes are now viewable** — a "Notes" card on the order detail page displays `order.notes` whenever present. This data existed already but was never rendered anywhere.
 - **Ship To is now editable** — a pencil icon on the Ship To card opens a form (name, street, city, province, postal code). Creates a new address and links it to the order if none exists yet, or updates the existing one. Blocked only once an order is soft-deleted. (`EditAddressModal.tsx`, `PATCH /api/orders/[id]/address`)
 - **Optional printed photo** — once an order reaches "Printed" (or later) in the pipeline, a "Printed Photo" card appears on the order detail page where you can add a photo URL of the finished print. Entirely optional — the card doesn't show before that stage unless a photo was already added. (`EditPhotoModal.tsx`, `PATCH /api/orders/[id]/photo`, `Order.printedPhotoUrl`)
+- **Purchases module** — a new "Purchases" nav item/page (`/admin/purchases`) for logging what the shop buys — keychain materials, mechanical switches, filament refills, or anything else. Each entry has an item name, free-text category (with suggestions), optional supplier, quantity/unit, unit cost (total computed automatically), and status (Ordered/Received/Cancelled) with a one-click "mark received" action. Same search + 10-row pagination pattern as the other admin lists. Entries are also editable via a pencil icon. (`Purchase` model, `app/api/admin/purchases`, `PurchasesClient.tsx`)
+- **Product image upload** — the Add/Edit Product form now has an "Upload Image" button alongside the existing image-URL field. Saves to `public/uploads/products/` on local disk and returns a URL, since this app has no cloud storage (Supabase Storage) configured. `public/uploads/` is gitignored. (`app/api/admin/upload`)
+- **Filament Materials and Suppliers management in Settings** — both were previously read-only dropdowns (used only when adding a filament in Inventory). Settings now has full add/edit/delete for both. Deleting a material is blocked if any filament still references it; deleting a supplier deactivates it (soft delete) rather than removing it, since historical filaments/purchases may still reference it. (`app/api/admin/materials`, `app/api/admin/suppliers`, `MaterialsManager.tsx`, `SuppliersManager.tsx`)
 
 ### Fixed
 
@@ -27,6 +30,7 @@ All notable changes to this project are documented in this file.
 - **Dashboard revenue chart showed fake data.** "Revenue Overview" rendered a hardcoded 7-month mock trend regardless of actual orders. It now computes real monthly revenue/order counts from the database.
 - **`Decimal` serialization errors on the Orders pages.** Prisma `Decimal` fields (order totals, product prices) were being passed directly from Server Components into Client Components via object spreads, which Next.js disallows. Fixed by explicitly picking serializable fields instead of spreading.
 - **Customers page counted cancelled and deleted orders toward "Orders" and "Total Spent."** A customer's stats included money from orders that were cancelled and soft-deleted, inflating their totals. The query now excludes `CANCELLED`/`RETURNED` orders and soft-deleted ones, consistent with the Orders list and the existing "Avg. Order Value" calculation.
+- **Purchases "Total Spend" showed `NaN` after marking a purchase received (or adding/editing one), until a refresh.** The create/update/mark-received responses carry `unitCost`/`totalCost` as strings (Prisma serializes `Decimal` fields to strings over JSON), while the initial page load converts them to numbers. Mixing strings and numbers in the total-spend sum silently fell back to string concatenation instead of addition. Fixed by normalizing those fields to numbers on every state update.
 
 ### Changed
 
@@ -38,3 +42,4 @@ All notable changes to this project are documented in this file.
 
 - Added `Order.deletedAt` (nullable) via migration `20260713081940_add_order_deleted_at`.
 - Added `Order.printedPhotoUrl` (nullable) via migration `20260713132227_add_order_printed_photo_url`.
+- Added `Purchase` model and `PurchaseStatus` enum, with a `Supplier.purchases` back-relation, via migration `20260713151008_add_purchases`.

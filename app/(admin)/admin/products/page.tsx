@@ -1,12 +1,17 @@
 import AdminHeader from '@/components/layout/AdminHeader'
 import { prisma } from '@/lib/prisma/client'
+import { getSettings } from '@/lib/settings'
 import ProductsClient from './ProductsClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Products | Admin' }
 
 export default async function AdminProductsPage() {
+  const settings = await getSettings()
+  const showDeleted = settings.display?.showDeletedProducts ?? false
+
   const products = await prisma.product.findMany({
+    where: showDeleted ? {} : { isActive: true },
     include: {
       category: { select: { id: true, name: true } },
       images: { where: { isPrimary: true }, take: 1 },

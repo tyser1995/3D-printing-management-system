@@ -1,20 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
-import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 type Params = { params: Promise<{ id: string }> }
 
+// Admin-only (called from the admin order detail page) — no Supabase auth gate,
+// consistent with the other /api/admin/* routes in this app.
 export async function POST(request: NextRequest, { params }: Params) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const { id } = await params
     const body = await request.json()
     const { status, notes } = body
@@ -27,7 +22,6 @@ export async function POST(request: NextRequest, { params }: Params) {
           orderId: id,
           status,
           notes: notes ?? null,
-          changedBy: user.id,
         },
       }),
       prisma.order.update({

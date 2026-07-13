@@ -11,20 +11,20 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils/format'
 
-const MOCK_DATA = [
-  { month: 'Jan', revenue: 12500, orders: 42 },
-  { month: 'Feb', revenue: 18200, orders: 61 },
-  { month: 'Mar', revenue: 15800, orders: 53 },
-  { month: 'Apr', revenue: 22100, orders: 74 },
-  { month: 'May', revenue: 28400, orders: 95 },
-  { month: 'Jun', revenue: 31200, orders: 104 },
-  { month: 'Jul', revenue: 26800, orders: 89 },
-]
+export interface SalesChartPoint {
+  month: string
+  revenue: number
+  orders: number
+}
 
-export default function SalesChart() {
+interface Props {
+  data: SalesChartPoint[]
+}
+
+export default function SalesChart({ data }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={MOCK_DATA} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#f97316" stopOpacity={0.15} />

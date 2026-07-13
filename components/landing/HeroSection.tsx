@@ -161,7 +161,7 @@ export default function HeroSection() {
         </div>
 
         {/* Category quick links */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: 'Keychains', emoji: '🔑', slug: 'keychains' },
             { label: 'Figurines', emoji: '🎭', slug: 'figurines' },
@@ -180,7 +180,7 @@ export default function HeroSection() {
               <ArrowRight className="ml-auto h-4 w-4 text-slate-600 opacity-0 transition-all group-hover:translate-x-1 group-hover:text-[#6EC30B] group-hover:opacity-100" />
             </Link>
           ))}
-        </div>
+        </div> */}
       </div>
     </section>
   )

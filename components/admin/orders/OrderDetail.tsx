@@ -2,12 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Package, User } from 'lucide-react'
+import { MapPin, Package, User, Pencil, ImageIcon } from 'lucide-react'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import OrderStatusStepper from './OrderStatusStepper'
+import EditOrderModal from './EditOrderModal'
+import EditAddressModal from './EditAddressModal'
+import EditPhotoModal from './EditPhotoModal'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+
+const STATUS_ORDER = [
+  'PENDING',
+  'CONFIRMED',
+  'IN_PRINT_QUEUE',
+  'PRINTING',
+  'PRINTED',
+  'QUALITY_CHECK',
+  'PACKAGING',
+  'SHIPPED',
+  'DELIVERED',
+]
 
 const STATUS_COLORS: Record<
   string,
@@ -65,7 +80,9 @@ interface Order {
   total: number | string
   notes: string | null
   trackingNumber: string | null
+  printedPhotoUrl: string | null
   createdAt: string | Date
+  deletedAt: string | Date | null
   user: { id: string; name: string | null; email: string; phone: string | null }
   address: {
     firstName: string
@@ -79,11 +96,35 @@ interface Order {
   statusLogs: StatusLog[]
 }
 
-export default function OrderDetail({ order: initialOrder }: { order: Order }) {
+interface Product {
+  id: string
+  name: string
+  basePrice: number
+  salePrice: number | null
+  sku: string
+}
+
+export default function OrderDetail({
+  order: initialOrder,
+  products,
+}: {
+  order: Order
+  products: Product[]
+}) {
   const router = useRouter()
   const [order, setOrder] = useState(initialOrder)
   const [advancing, setAdvancing] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editingAddress, setEditingAddress] = useState(false)
+  const [editingPhoto, setEditingPhoto] = useState(false)
+
+  const isEditable =
+    order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && !order.deletedAt
+
+  const hasBeenPrinted =
+    STATUS_ORDER.indexOf(order.status) >= STATUS_ORDER.indexOf('PRINTED') || !!order.printedPhotoUrl
 
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -107,6 +148,8 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
           ],
         }))
         router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to update order status')
       }
     } finally {
       setAdvancing(false)
@@ -117,14 +160,44 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
     if (!confirm('Cancel this order?')) return
     setCancelling(true)
     try {
-      await fetch(`/api/orders/${order.id}/status`, {
+      const res = await fetch(`/api/orders/${order.id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'CANCELLED', notes: 'Cancelled by admin' }),
       })
-      setOrder((prev) => ({ ...prev, status: 'CANCELLED' }))
+      const json = await res.json()
+      if (res.ok) {
+        setOrder((prev) => ({
+          ...prev,
+          status: 'CANCELLED',
+          statusLogs: [
+            ...prev.statusLogs,
+            { ...json.data.log, createdAt: new Date(json.data.log.createdAt) },
+          ],
+        }))
+        router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to cancel order')
+      }
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const deleteOrder = async () => {
+    if (!confirm('Delete this cancelled order? It will be hidden from the Orders list.')) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (res.ok) {
+        router.push('/admin/orders')
+        router.refresh()
+      } else {
+        alert(json.error ?? 'Failed to delete order')
+      }
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -147,13 +220,28 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
                 → {nextStatus.replace(/_/g, ' ')}
               </Button>
             )}
+            {isEditable && (
+              <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+            )}
             {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
               <Button size="sm" variant="danger" loading={cancelling} onClick={cancelOrder}>
                 Cancel
               </Button>
             )}
+            {order.status === 'CANCELLED' && !order.deletedAt && (
+              <Button size="sm" variant="outline" loading={deleting} onClick={deleteOrder}>
+                Delete
+              </Button>
+            )}
           </div>
         </div>
+        {order.deletedAt && (
+          <p className="-mt-4 text-sm text-slate-400">
+            This order was deleted and is hidden from the Orders list.
+          </p>
+        )}
 
         {/* Items */}
         <Card padding="none">
@@ -235,6 +323,15 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
               <CardTitle className="flex items-center gap-2 text-base">
                 <MapPin className="h-4 w-4" /> Ship To
               </CardTitle>
+              {!order.deletedAt && (
+                <button
+                  onClick={() => setEditingAddress(true)}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  title={order.address ? 'Edit address' : 'Add address'}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
             </CardHeader>
             {order.address ? (
               <div className="space-y-1 text-sm text-slate-600">
@@ -259,6 +356,44 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
             <p className="font-mono font-semibold text-slate-900">{order.trackingNumber}</p>
           </Card>
         )}
+
+        {/* Notes */}
+        {order.notes && (
+          <Card>
+            <p className="text-sm text-slate-500">Notes</p>
+            <p className="mt-1 text-sm whitespace-pre-wrap text-slate-900">{order.notes}</p>
+          </Card>
+        )}
+
+        {/* Printed Photo (optional) */}
+        {hasBeenPrinted && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ImageIcon className="h-4 w-4" /> Printed Photo
+              </CardTitle>
+              {!order.deletedAt && (
+                <button
+                  onClick={() => setEditingPhoto(true)}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  title={order.printedPhotoUrl ? 'Change photo' : 'Add photo'}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </CardHeader>
+            {order.printedPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={order.printedPhotoUrl}
+                alt="Finished print"
+                className="max-h-72 w-full rounded-lg object-contain"
+              />
+            ) : (
+              <p className="text-sm text-slate-400">No photo added yet</p>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Right — timeline */}
@@ -270,6 +405,63 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
           <OrderStatusStepper currentStatus={order.status} statusLogs={order.statusLogs} />
         </Card>
       </div>
+
+      {editing && (
+        <EditOrderModal
+          orderId={order.id}
+          initialItems={order.items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          }))}
+          initialShippingFee={Number(order.shippingFee)}
+          initialDiscount={Number(order.discount)}
+          initialNotes={order.notes ?? ''}
+          initialTrackingNumber={order.trackingNumber ?? ''}
+          products={products}
+          onClose={() => setEditing(false)}
+          onSaved={(updated) => {
+            const u = updated as Order
+            setOrder((prev) => ({
+              ...prev,
+              subtotal: u.subtotal,
+              shippingFee: u.shippingFee,
+              discount: u.discount,
+              total: u.total,
+              notes: u.notes,
+              trackingNumber: u.trackingNumber,
+              items: u.items,
+            }))
+            setEditing(false)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {editingAddress && (
+        <EditAddressModal
+          orderId={order.id}
+          initialAddress={order.address}
+          onClose={() => setEditingAddress(false)}
+          onSaved={(address) => {
+            setOrder((prev) => ({ ...prev, address }))
+            setEditingAddress(false)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {editingPhoto && (
+        <EditPhotoModal
+          orderId={order.id}
+          initialPhotoUrl={order.printedPhotoUrl}
+          onClose={() => setEditingPhoto(false)}
+          onSaved={(photoUrl) => {
+            setOrder((prev) => ({ ...prev, printedPhotoUrl: photoUrl }))
+            setEditingPhoto(false)
+            router.refresh()
+          }}
+        />
+      )}
     </div>
   )
 }

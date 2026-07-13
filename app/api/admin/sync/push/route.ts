@@ -1,0 +1,20 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma/client'
+import { getSupabaseSyncClient } from '@/lib/prisma/supabaseSync'
+import { syncBackup } from '@/lib/prisma/backup'
+
+export const dynamic = 'force-dynamic'
+
+// Overwrites Supabase with the current local (or whatever DATABASE_URL points to) data.
+export async function POST() {
+  try {
+    const supabase = getSupabaseSyncClient()
+    const counts = await syncBackup(prisma, supabase)
+    const total = Object.values(counts).reduce((a, b) => a + (b ?? 0), 0)
+    return NextResponse.json({ data: { direction: 'push', counts, total } })
+  } catch (error) {
+    console.error('[POST /api/admin/sync/push]', error)
+    const message = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

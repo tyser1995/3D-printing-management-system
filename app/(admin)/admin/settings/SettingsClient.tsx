@@ -93,7 +93,7 @@ export default function SettingsClient({ initialSettings }: Props) {
     setCost((p) => ({ ...p, [key]: e.target.value }))
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <>
       <Card>
         <CardHeader>
           <CardTitle>Shop Information</CardTitle>
@@ -187,6 +187,6 @@ export default function SettingsClient({ initialSettings }: Props) {
           </div>
         </div>
       </Card>
-    </div>
+    </>
   )
 }

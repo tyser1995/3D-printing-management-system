@@ -7,14 +7,18 @@
   },
   "costDefaults": {
     "electricityRate": 12,
-    "laborRate": 75,
-    "profitMargin": 30,
-    "packagingCost": 25
+    "laborRate": 10,
+    "profitMargin": 20,
+    "packagingCost": 10
   },
   "notifications": {
     "emailNewOrder": true,
     "emailLowStock": true,
     "emailPrintDone": true,
     "smsOrderShipped": false
+  },
+  "display": {
+    "showDeletedOrders": false,
+    "showDeletedProducts": false
   }
 }

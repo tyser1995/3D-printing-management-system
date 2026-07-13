@@ -18,24 +18,31 @@ export async function generateMetadata({ params }: Props) {
 export default async function AdminOrderDetailPage({ params }: Props) {
   const { id } = await params
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      user: { select: { id: true, name: true, email: true, phone: true } },
-      address: true,
-      items: {
-        include: {
-          product: {
-            include: { images: { where: { isPrimary: true }, take: 1 } },
+  const [order, products] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        address: true,
+        items: {
+          include: {
+            product: {
+              include: { images: { where: { isPrimary: true }, take: 1 } },
+            },
           },
         },
+        statusLogs: { orderBy: { createdAt: 'asc' } },
+        printJobs: {
+          include: { printer: { select: { id: true, name: true, model: true } } },
+        },
       },
-      statusLogs: { orderBy: { createdAt: 'asc' } },
-      printJobs: {
-        include: { printer: { select: { id: true, name: true, model: true } } },
-      },
-    },
-  })
+    }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, basePrice: true, salePrice: true, sku: true },
+      orderBy: { name: 'asc' },
+    }),
+  ])
 
   if (!order) notFound()
 
@@ -81,6 +88,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               },
             })),
           }}
+          products={products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            basePrice: Number(p.basePrice),
+            salePrice: p.salePrice === null ? null : Number(p.salePrice),
+          }))}
         />
       </div>
     </div>

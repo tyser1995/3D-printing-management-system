@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Package, User } from 'lucide-react'
+import { MapPin, Package, User, Pencil } from 'lucide-react'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import OrderStatusStepper from './OrderStatusStepper'
+import EditOrderModal from './EditOrderModal'
+import EditAddressModal from './EditAddressModal'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 
 const STATUS_COLORS: Record<
@@ -80,12 +82,31 @@ interface Order {
   statusLogs: StatusLog[]
 }
 
-export default function OrderDetail({ order: initialOrder }: { order: Order }) {
+interface Product {
+  id: string
+  name: string
+  basePrice: number
+  salePrice: number | null
+  sku: string
+}
+
+export default function OrderDetail({
+  order: initialOrder,
+  products,
+}: {
+  order: Order
+  products: Product[]
+}) {
   const router = useRouter()
   const [order, setOrder] = useState(initialOrder)
   const [advancing, setAdvancing] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editingAddress, setEditingAddress] = useState(false)
+
+  const isEditable =
+    order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && !order.deletedAt
 
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -179,6 +200,11 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
             {nextStatus && (
               <Button size="sm" loading={advancing} onClick={advanceStatus}>
                 → {nextStatus.replace(/_/g, ' ')}
+              </Button>
+            )}
+            {isEditable && (
+              <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="h-3.5 w-3.5" /> Edit
               </Button>
             )}
             {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
@@ -279,6 +305,15 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
               <CardTitle className="flex items-center gap-2 text-base">
                 <MapPin className="h-4 w-4" /> Ship To
               </CardTitle>
+              {!order.deletedAt && (
+                <button
+                  onClick={() => setEditingAddress(true)}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  title={order.address ? 'Edit address' : 'Add address'}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
             </CardHeader>
             {order.address ? (
               <div className="space-y-1 text-sm text-slate-600">
@@ -303,6 +338,14 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
             <p className="font-mono font-semibold text-slate-900">{order.trackingNumber}</p>
           </Card>
         )}
+
+        {/* Notes */}
+        {order.notes && (
+          <Card>
+            <p className="text-sm text-slate-500">Notes</p>
+            <p className="mt-1 text-sm whitespace-pre-wrap text-slate-900">{order.notes}</p>
+          </Card>
+        )}
       </div>
 
       {/* Right — timeline */}
@@ -314,6 +357,50 @@ export default function OrderDetail({ order: initialOrder }: { order: Order }) {
           <OrderStatusStepper currentStatus={order.status} statusLogs={order.statusLogs} />
         </Card>
       </div>
+
+      {editing && (
+        <EditOrderModal
+          orderId={order.id}
+          initialItems={order.items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          }))}
+          initialShippingFee={Number(order.shippingFee)}
+          initialDiscount={Number(order.discount)}
+          initialNotes={order.notes ?? ''}
+          initialTrackingNumber={order.trackingNumber ?? ''}
+          products={products}
+          onClose={() => setEditing(false)}
+          onSaved={(updated) => {
+            const u = updated as Order
+            setOrder((prev) => ({
+              ...prev,
+              subtotal: u.subtotal,
+              shippingFee: u.shippingFee,
+              discount: u.discount,
+              total: u.total,
+              notes: u.notes,
+              trackingNumber: u.trackingNumber,
+              items: u.items,
+            }))
+            setEditing(false)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {editingAddress && (
+        <EditAddressModal
+          orderId={order.id}
+          initialAddress={order.address}
+          onClose={() => setEditingAddress(false)}
+          onSaved={(address) => {
+            setOrder((prev) => ({ ...prev, address }))
+            setEditingAddress(false)
+            router.refresh()
+          }}
+        />
+      )}
     </div>
   )
 }

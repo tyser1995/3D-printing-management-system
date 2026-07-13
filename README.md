@@ -108,6 +108,17 @@ The Settings page (`/admin/settings`) covers more than shop info:
 
 New products auto-generate their SKU, continuing whichever prefix a category already uses (`KCH-001` → `KCH-002`); a brand-new category derives a prefix from its name.
 
+## Orders
+
+From an order's detail page (`/admin/orders/[id]`) an admin can:
+
+- **Advance status** step by step (Pending → Confirmed → ... → Delivered), or **Cancel** at any point before delivery
+- **Edit** — change line items/quantities, shipping fee, discount, tracking number, and notes (blocked once an order is cancelled, delivered, or deleted)
+- **Delete** a cancelled order — a soft delete; hidden from the Orders list unless "Show deleted orders" is on in Settings
+- View **Notes** and add/edit the **Ship To** address inline
+
+Products, Orders, and Customers lists all paginate at 10 rows per page.
+
 ## Switching to Supabase
 
 1. Create a project at [supabase.com](https://supabase.com)

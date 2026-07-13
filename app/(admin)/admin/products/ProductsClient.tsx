@@ -6,10 +6,12 @@ import { Plus, Search, Edit2, Trash2, Eye, Calculator } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import Pagination from '@/components/ui/Pagination'
 import ProductFormModal, {
   type ProductFormData,
 } from '@/components/admin/products/ProductFormModal'
 import { formatCurrency } from '@/lib/utils/format'
+import { usePagination } from '@/lib/hooks/usePagination'
 
 interface Category {
   id: string
@@ -51,6 +53,13 @@ export default function ProductsClient({ initialProducts }: Props) {
       p.name.toLowerCase().includes(query.toLowerCase()) ||
       p.sku.toLowerCase().includes(query.toLowerCase())
   )
+  const { page, pageCount, total, pageSize, pageItems, setPage, resetPage } =
+    usePagination(filtered)
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    resetPage()
+  }
 
   const refresh = async () => {
     const res = await fetch('/api/admin/products')
@@ -110,7 +119,7 @@ export default function ProductsClient({ initialProducts }: Props) {
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search products..."
             className="h-9 w-64 rounded-lg border border-slate-200 bg-white pr-4 pl-9 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-400 focus:outline-none"
           />
@@ -137,7 +146,7 @@ export default function ProductsClient({ initialProducts }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((product) => (
+              {pageItems.map((product) => (
                 <tr key={product.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-mono text-xs text-slate-500">{product.sku}</td>
                   <td className="px-6 py-4">
@@ -235,6 +244,13 @@ export default function ProductsClient({ initialProducts }: Props) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </Card>
 
       {showAdd && (

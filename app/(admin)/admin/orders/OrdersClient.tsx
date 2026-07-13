@@ -8,7 +8,9 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Pagination from '@/components/ui/Pagination'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { usePagination } from '@/lib/hooks/usePagination'
 
 const STATUS_COLORS: Record<
   string,
@@ -73,6 +75,30 @@ export default function OrdersClient({
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+
+  const filtered = orders.filter((o) => {
+    const q = query.toLowerCase()
+    return (
+      o.orderNumber.toLowerCase().includes(q) ||
+      (o.user.name ?? '').toLowerCase().includes(q) ||
+      o.user.email.toLowerCase().includes(q)
+    )
+  })
+  const {
+    page,
+    pageCount,
+    total: totalFiltered,
+    pageSize,
+    pageItems,
+    setPage,
+    resetPage,
+  } = usePagination(filtered)
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    resetPage()
+  }
 
   const [isNewCustomer, setIsNewCustomer] = useState(false)
   const [customerId, setCustomerId] = useState('')
@@ -203,6 +229,8 @@ export default function OrdersClient({
         <div className="relative">
           <input
             type="search"
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search orders..."
             className="h-9 w-64 rounded-lg border border-slate-200 bg-white pr-4 pl-9 text-sm focus:border-orange-400 focus:outline-none"
           />
@@ -228,7 +256,7 @@ export default function OrdersClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {orders.map((order) => (
+              {pageItems.map((order) => (
                 <tr
                   key={order.id}
                   className={`cursor-pointer hover:bg-slate-50 ${order.deletedAt ? 'opacity-50' : ''}`}
@@ -274,16 +302,23 @@ export default function OrdersClient({
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                    No orders yet.
+                    {query ? 'No orders match your search.' : 'No orders yet.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          total={totalFiltered}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </Card>
 
       {showForm && (

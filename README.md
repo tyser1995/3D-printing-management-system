@@ -2,6 +2,8 @@
 
 A full-stack platform for managing a custom 3D printing business — combining an e-commerce storefront, production management, inventory tracking, reporting, and an AI customization lab.
 
+The storefront homepage includes an **Available Filament Colors** section that reads live inventory — it lists every color with active, in-stock filament (`Filament.stockGrams > 0`) as a swatch, and disappears entirely when nothing is in stock. (`components/landing/AvailableColorsSection.tsx`)
+
 See [CHANGELOG.md](./CHANGELOG.md) for recent changes.
 
 ## Tech Stack

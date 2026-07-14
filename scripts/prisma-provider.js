@@ -9,7 +9,17 @@ const { execSync } = require('child_process')
 
 const schemaPath = path.join(__dirname, '..', 'prisma', 'schema.prisma')
 const databaseUrl = process.env.DATABASE_URL ?? ''
-const provider = databaseUrl.startsWith('file:') ? 'sqlite' : 'postgresql'
+
+function isValidPostgresUrl(url) {
+  if (!url || !URL.canParse(url)) return false
+  const protocol = new URL(url).protocol
+  return protocol === 'postgres:' || protocol === 'postgresql:'
+}
+
+// file: URL -> sqlite. Valid postgres(ql):// URL -> postgresql. Anything else (missing,
+// blank, or a placeholder like "your_supabase_connection_string") -> sqlite, matching
+// lib/prisma/client.ts's runtime fallback to the bundled demo dataset.
+const provider = isValidPostgresUrl(databaseUrl) ? 'postgresql' : 'sqlite'
 
 const schema = fs.readFileSync(schemaPath, 'utf8')
 const updated = schema.replace(/(datasource db \{\s*provider = )"[^"]+"/, `$1"${provider}"`)

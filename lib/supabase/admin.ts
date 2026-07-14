@@ -11,7 +11,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 let cachedClient: SupabaseClient | null | undefined
 
 export function isSupabaseAdminConfigured(): boolean {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  return !!url && URL.canParse(url) && !!key
 }
 
 /** Returns a memoized admin client, or null when Supabase env vars aren't configured. */

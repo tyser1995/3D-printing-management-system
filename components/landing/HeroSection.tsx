@@ -2,13 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
-
-const stats = [
-  { value: '500+', label: 'Orders Delivered' },
-  { value: '4.9★', label: 'Avg Rating' },
-  { value: '24h', label: 'Fast Turnaround' },
-  { value: '100%', label: 'Quality Checked' },
-]
+import { prisma } from '@/lib/prisma/client'
 
 const features = [
   { icon: Zap, text: 'Bambu Lab A1' },
@@ -16,7 +10,18 @@ const features = [
   // { icon: Shield, text: 'Quality guaranteed or reprinted' },
 ]
 
-export default function HeroSection() {
+export default async function HeroSection() {
+  const deliveredCount = await prisma.order.count({
+    where: { status: 'DELIVERED', deletedAt: null },
+  })
+
+  const stats = [
+    { value: `${deliveredCount}`, label: 'Orders Delivered' },
+    { value: '4.9★', label: 'Avg Rating' },
+    { value: '24h', label: 'Fast Turnaround' },
+    { value: '100%', label: 'Quality Checked' },
+  ]
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#1A1A1A]">
       {/* Background grid */}

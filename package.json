@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:e2e": "playwright test",
-    "db:generate": "prisma generate",
+    "db:generate": "node scripts/prisma-provider.js",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
@@ -21,7 +21,7 @@
     "db:local:up": "docker compose up -d && echo 'PostgreSQL ready at localhost:5432 · pgAdmin at http://localhost:5050'",
     "db:local:down": "docker compose down",
     "db:local:reset": "docker compose down -v && docker compose up -d",
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/prisma-provider.js",
     "prepare": "husky"
   },
   "lint-staged": {

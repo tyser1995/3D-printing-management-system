@@ -16,7 +16,8 @@ import Alert from '@/components/ui/Alert'
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/'
+  const redirectParam = searchParams.get('redirect')
+  const redirect = redirectParam ?? '/'
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,7 +37,9 @@ export default function LoginForm() {
     })
 
     if (adminRes.ok) {
-      router.push(redirect)
+      // Admin login with no explicit bounce-back target (i.e. visited /login directly,
+      // not redirected from a protected page) should land on the admin panel, not '/'.
+      router.push(redirectParam ?? '/admin/dashboard')
       router.refresh()
       return
     }

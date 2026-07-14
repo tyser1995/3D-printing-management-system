@@ -21,6 +21,7 @@
     "db:local:up": "docker compose up -d && echo 'PostgreSQL ready at localhost:5432 · pgAdmin at http://localhost:5050'",
     "db:local:down": "docker compose down",
     "db:local:reset": "docker compose down -v && docker compose up -d",
+    "postinstall": "prisma generate",
     "prepare": "husky"
   },
   "lint-staged": {

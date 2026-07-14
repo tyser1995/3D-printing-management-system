@@ -31,14 +31,22 @@ interface Kpis {
   avgOrder: number
   revenueChange: number
 }
+interface Fulfillment {
+  orderedRevenue: number
+  deliveredRevenue: number
+  orderedItems: number
+  deliveredItems: number
+  deliveredPct: number
+}
 
 interface Props {
   chartData: ChartPoint[]
   topProducts: TopProduct[]
   kpis: Kpis
+  fulfillment: Fulfillment
 }
 
-export default function ReportsClient({ chartData, topProducts, kpis }: Props) {
+export default function ReportsClient({ chartData, topProducts, kpis, fulfillment }: Props) {
   const [period, setPeriod] = useState<'month' | 'year'>('month')
   const [exporting, setExporting] = useState(false)
 
@@ -191,6 +199,46 @@ export default function ReportsClient({ chartData, topProducts, kpis }: Props) {
           )}
         </Card>
       </div>
+
+      {/* Delivered vs Ordered (all-time) */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Delivered vs Ordered (All-Time)</CardTitle>
+        </CardHeader>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <p className="text-sm text-slate-500">Revenue</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              {formatCurrency(fulfillment.deliveredRevenue)}
+              <span className="ml-1 text-base font-normal text-slate-400">
+                / {formatCurrency(fulfillment.orderedRevenue)}
+              </span>
+            </p>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-orange-500"
+                style={{ width: `${Math.min(fulfillment.deliveredPct, 100)}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {fulfillment.deliveredPct.toFixed(1)}% of ordered revenue has been delivered
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-slate-500">Items</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              {fulfillment.deliveredItems}
+              <span className="ml-1 text-base font-normal text-slate-400">
+                / {fulfillment.orderedItems} ordered
+              </span>
+            </p>
+            <p className="mt-3 text-xs text-slate-500">
+              &ldquo;Ordered&rdquo; excludes cancelled/returned orders. &ldquo;Delivered&rdquo;
+              counts only orders that have reached the Delivered status.
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

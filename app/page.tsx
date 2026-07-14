@@ -3,6 +3,7 @@ import Footer from '@/components/layout/Footer'
 import HeroSection from '@/components/landing/HeroSection'
 import StatsSection from '@/components/landing/StatsSection'
 import AvailableColorsSection from '@/components/landing/AvailableColorsSection'
+import ColorCombinationsSection from '@/components/landing/ColorCombinationsSection'
 import FeaturesSection from '@/components/landing/FeaturesSection'
 import HowItWorksSection from '@/components/landing/HowItWorksSection'
 import CTASection from '@/components/landing/CTASection'
@@ -17,6 +18,7 @@ export default function HomePage() {
         <HeroSection />
         <StatsSection />
         <AvailableColorsSection />
+        <ColorCombinationsSection />
         <FeaturesSection />
         <HowItWorksSection />
         <CTASection />

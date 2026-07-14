@@ -18,6 +18,7 @@ export interface AppSettings {
   display?: {
     showDeletedOrders?: boolean
     showDeletedProducts?: boolean
+    showStyleGuide?: boolean
   }
 }
 

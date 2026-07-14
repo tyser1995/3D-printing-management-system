@@ -8,6 +8,7 @@ import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
 interface Display {
   showDeletedOrders?: boolean
   showDeletedProducts?: boolean
+  showStyleGuide?: boolean
 }
 
 interface Props {
@@ -55,6 +56,7 @@ export default function DataVisibilityManager({ initialDisplay }: Props) {
   const [display, setDisplay] = useState<Display>({
     showDeletedOrders: initialDisplay.showDeletedOrders ?? false,
     showDeletedProducts: initialDisplay.showDeletedProducts ?? false,
+    showStyleGuide: initialDisplay.showStyleGuide ?? false,
   })
   const [saving, setSaving] = useState(false)
 
@@ -94,6 +96,12 @@ export default function DataVisibilityManager({ initialDisplay }: Props) {
             onChange={() => toggle('showDeletedProducts')}
             label="Show deleted products"
             hint="Reveal deactivated products in the Products list"
+          />
+          <Toggle
+            checked={!!display.showStyleGuide}
+            onChange={() => toggle('showStyleGuide')}
+            label="Show Style Guide on homepage"
+            hint="Color Combination Ideas section, right after Available Filament Colors"
           />
         </div>
       </div>

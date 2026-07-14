@@ -7,10 +7,13 @@ import ColorCombinationsSection from '@/components/landing/ColorCombinationsSect
 import FeaturesSection from '@/components/landing/FeaturesSection'
 import HowItWorksSection from '@/components/landing/HowItWorksSection'
 import CTASection from '@/components/landing/CTASection'
+import { getSettings } from '@/lib/settings'
 
 export const dynamic = 'force-dynamic'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getSettings()
+
   return (
     <>
       <Navbar />
@@ -18,7 +21,7 @@ export default function HomePage() {
         <HeroSection />
         <StatsSection />
         <AvailableColorsSection />
-        <ColorCombinationsSection />
+        {settings.display?.showStyleGuide && <ColorCombinationsSection />}
         <FeaturesSection />
         <HowItWorksSection />
         <CTASection />

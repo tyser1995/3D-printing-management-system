@@ -19,6 +19,7 @@
   },
   "display": {
     "showDeletedOrders": false,
-    "showDeletedProducts": false
+    "showDeletedProducts": false,
+    "showStyleGuide": false
   }
 }

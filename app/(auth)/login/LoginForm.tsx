@@ -5,15 +5,13 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, LogIn, Zap } from 'lucide-react'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Alert from '@/components/ui/Alert'
-
-const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -30,6 +28,19 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginInput) => {
     setError(null)
+
+    const adminRes = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+
+    if (adminRes.ok) {
+      router.push(redirect)
+      router.refresh()
+      return
+    }
+
     const supabase = createClient()
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: data.email,
@@ -47,23 +58,6 @@ export default function LoginForm() {
 
   return (
     <Card className="border-white/10 bg-white/5 text-white">
-      {isDevMode && (
-        <div className="mb-6 rounded-lg border border-[#6EC30B]/30 bg-[#6EC30B]/10 p-4">
-          <p className="mb-3 text-xs font-semibold tracking-wider text-[#6EC30B] uppercase">
-            ⚡ Dev Mode — Supabase not configured
-          </p>
-          <Button
-            type="button"
-            fullWidth
-            className="gap-2"
-            onClick={() => router.push('/admin/dashboard')}
-          >
-            <Zap className="h-4 w-4" />
-            Enter Admin Panel
-          </Button>
-        </div>
-      )}
-
       {error && (
         <Alert variant="error" className="mb-6">
           {error}

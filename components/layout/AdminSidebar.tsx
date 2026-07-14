@@ -50,6 +50,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
       const supabase = createClient()
       await supabase.auth.signOut()
     }
+    await fetch('/api/auth/admin-logout', { method: 'POST' })
     router.push('/login')
   }
 

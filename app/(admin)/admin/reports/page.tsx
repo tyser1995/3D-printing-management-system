@@ -10,35 +10,46 @@ export default async function AdminReportsPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
-  const [thisMonthOrders, lastMonthOrders, topProducts] = await Promise.all([
-    prisma.order.findMany({
-      where: {
-        createdAt: { gte: monthStart },
-        status: { notIn: ['CANCELLED', 'RETURNED'] },
-      },
-      select: { total: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
-    }),
-    prisma.order.findMany({
-      where: {
-        createdAt: { gte: lastMonthStart, lt: monthStart },
-        status: { notIn: ['CANCELLED', 'RETURNED'] },
-      },
-      select: { total: true },
-    }),
-    prisma.orderItem.groupBy({
-      by: ['productId'],
-      where: {
-        order: {
+  // "Ordered" = every non-cancelled/non-returned order item, all-time.
+  // "Delivered" = the subset of those whose order has actually reached DELIVERED.
+  const [thisMonthOrders, lastMonthOrders, topProducts, orderedAgg, deliveredAgg] =
+    await Promise.all([
+      prisma.order.findMany({
+        where: {
           createdAt: { gte: monthStart },
           status: { notIn: ['CANCELLED', 'RETURNED'] },
         },
-      },
-      _sum: { quantity: true, totalPrice: true },
-      orderBy: { _sum: { totalPrice: 'desc' } },
-      take: 5,
-    }),
-  ])
+        select: { total: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.order.findMany({
+        where: {
+          createdAt: { gte: lastMonthStart, lt: monthStart },
+          status: { notIn: ['CANCELLED', 'RETURNED'] },
+        },
+        select: { total: true },
+      }),
+      prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          order: {
+            createdAt: { gte: monthStart },
+            status: { notIn: ['CANCELLED', 'RETURNED'] },
+          },
+        },
+        _sum: { quantity: true, totalPrice: true },
+        orderBy: { _sum: { totalPrice: 'desc' } },
+        take: 5,
+      }),
+      prisma.orderItem.aggregate({
+        where: { order: { status: { notIn: ['CANCELLED', 'RETURNED'] } } },
+        _sum: { quantity: true, totalPrice: true },
+      }),
+      prisma.orderItem.aggregate({
+        where: { order: { status: 'DELIVERED' } },
+        _sum: { quantity: true, totalPrice: true },
+      }),
+    ])
 
   // Enrich top products with names
   const productIds = topProducts.map((p) => p.productId)
@@ -80,10 +91,26 @@ export default async function AdminReportsPage() {
     revenueChange,
   }
 
+  const orderedRevenue = Number(orderedAgg._sum.totalPrice ?? 0)
+  const deliveredRevenue = Number(deliveredAgg._sum.totalPrice ?? 0)
+
+  const fulfillment = {
+    orderedRevenue,
+    deliveredRevenue,
+    orderedItems: orderedAgg._sum.quantity ?? 0,
+    deliveredItems: deliveredAgg._sum.quantity ?? 0,
+    deliveredPct: orderedRevenue > 0 ? (deliveredRevenue / orderedRevenue) * 100 : 0,
+  }
+
   return (
     <div className="flex flex-col overflow-hidden">
       <AdminHeader title="Reports" />
-      <ReportsClient chartData={chartData} topProducts={topProductsData} kpis={kpis} />
+      <ReportsClient
+        chartData={chartData}
+        topProducts={topProductsData}
+        kpis={kpis}
+        fulfillment={fulfillment}
+      />
     </div>
   )
 }

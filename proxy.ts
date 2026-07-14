@@ -13,6 +13,18 @@ export async function proxy(request: NextRequest) {
 
   const hasAdminSession = verifyAdminSessionToken(request.cookies.get(ADMIN_SESSION_COOKIE)?.value)
 
+  // Maintenance mode: everyone except an already-logged-in admin gets the maintenance
+  // page. /login stays reachable so the admin can still sign in to lift it (there's no
+  // live toggle — MAINTENANCE_MODE is set via `vercel env` + a redeploy).
+  if (
+    process.env.MAINTENANCE_MODE === 'true' &&
+    !hasAdminSession &&
+    pathname !== '/maintenance' &&
+    pathname !== '/login'
+  ) {
+    return NextResponse.rewrite(new URL('/maintenance', request.url))
+  }
+
   const { url: supabaseUrl, key: supabaseKey, isConfigured } = getSupabaseEnv()
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true'
 

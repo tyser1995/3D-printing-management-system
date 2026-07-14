@@ -52,8 +52,5 @@ prisma/*.db-journal
 prisma/*.db-wal
 prisma/*.db-shm
 
-# local sample/demo dataset (Settings > Sample Data)
-data/sample-data.json
-
 # locally-uploaded product images (no cloud storage configured)
 /public/uploads/

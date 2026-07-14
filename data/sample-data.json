@@ -1,0 +1,576 @@
+{
+  "meta": {
+    "name": "Kai3D Demo Dataset",
+    "description": "Sample categories, products, filaments, suppliers and orders for demoing the app.",
+    "version": 1
+  },
+  "data": {
+    "user": [
+      {
+        "id": "user_admin_seed",
+        "email": "admin@kai3d.test",
+        "name": "Admin Kai3D",
+        "avatarUrl": null,
+        "role": "ADMIN",
+        "phone": null,
+        "createdAt": "2026-07-10T05:27:45.653Z",
+        "updatedAt": "2026-07-10T05:27:45.653Z"
+      },
+      {
+        "id": "user_customer_seed",
+        "email": "customer@kai3d.test",
+        "name": "Maria Santos",
+        "avatarUrl": null,
+        "role": "CUSTOMER",
+        "phone": null,
+        "createdAt": "2026-07-10T05:27:45.738Z",
+        "updatedAt": "2026-07-10T05:27:45.738Z"
+      }
+    ],
+    "category": [
+      {
+        "id": "cmrehv3a90000g4p9o9yvtwyi",
+        "name": "Keychains",
+        "slug": "keychains",
+        "description": "Custom 3D-printed keychains",
+        "imageUrl": null,
+        "parentId": null,
+        "sortOrder": 1,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:43.714Z"
+      },
+      {
+        "id": "cmrehv3d40001g4p9tpa4mpat",
+        "name": "Clickers",
+        "slug": "clickers",
+        "description": "Detailed figurines and collectibles",
+        "imageUrl": null,
+        "parentId": null,
+        "sortOrder": 2,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:43.816Z"
+      },
+      {
+        "id": "cmrehv3fh0002g4p9z0jkukcb",
+        "name": "Souvenirs",
+        "slug": "souvenirs",
+        "description": "Desk accessories and organizers",
+        "imageUrl": null,
+        "parentId": null,
+        "sortOrder": 3,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:43.901Z"
+      },
+      {
+        "id": "cmrehv3hj0003g4p90p3iye0o",
+        "name": "Toppers",
+        "slug": "toppers",
+        "description": "Custom nameplates and signs",
+        "imageUrl": null,
+        "parentId": null,
+        "sortOrder": 4,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:43.975Z"
+      }
+    ],
+    "supplier": [
+      {
+        "id": "sup_bambu",
+        "name": "Bambu Lab",
+        "contact": "Bambu Sales",
+        "email": "supplies@bambulab.com",
+        "phone": null,
+        "address": null,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:44.966Z"
+      },
+      {
+        "id": "sup_esun",
+        "name": "eSUN",
+        "contact": "eSUN PH",
+        "email": "info@esun3d.com",
+        "phone": null,
+        "address": null,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.049Z"
+      },
+      {
+        "id": "sup_polymaker",
+        "name": "Polymaker",
+        "contact": "Polymaker Sales",
+        "email": "contact@polymaker.com",
+        "phone": null,
+        "address": null,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.123Z"
+      }
+    ],
+    "filamentMaterial": [
+      {
+        "id": "cmrehv3yi000ig4p9mvdkkp3d",
+        "name": "PLA",
+        "description": "Polylactic Acid — easy to print, biodegradable",
+        "properties": null
+      },
+      {
+        "id": "cmrehv40s000jg4p9th933bd0",
+        "name": "PLA+",
+        "description": "Enhanced PLA with better layer adhesion",
+        "properties": null
+      },
+      {
+        "id": "cmrehv42v000kg4p9qz6jpmbr",
+        "name": "PETG",
+        "description": "Polyethylene Terephthalate Glycol — strong and flexible",
+        "properties": null
+      },
+      {
+        "id": "cmrehv44x000lg4p9nvkrgbj3",
+        "name": "ABS",
+        "description": "Acrylonitrile Butadiene Styrene — heat resistant",
+        "properties": null
+      },
+      {
+        "id": "cmrehv46y000mg4p927fn8w4p",
+        "name": "TPU",
+        "description": "Thermoplastic Polyurethane — flexible rubber-like",
+        "properties": null
+      }
+    ],
+    "printer": [],
+    "address": [],
+    "product": [
+      {
+        "id": "cmrehv3nd0004g4p96fupd3cd",
+        "name": "Custom Name Keychain",
+        "slug": "custom-name-keychain",
+        "description": "Personalized keychain with your name or message. Printed in durable PLA+.",
+        "categoryId": "cmrehv3a90000g4p9o9yvtwyi",
+        "basePrice": "89",
+        "salePrice": null,
+        "sku": "KCH-001",
+        "stockQuantity": 50,
+        "isActive": true,
+        "isFeatured": true,
+        "weight": null,
+        "dimensions": null,
+        "tags": "keychain, custom, name",
+        "createdAt": "2026-07-10T05:27:44.186Z",
+        "updatedAt": "2026-07-10T05:27:44.186Z"
+      },
+      {
+        "id": "cmrehv3pm0007g4p9rohfdgei",
+        "name": "Anime Figurine Standard",
+        "slug": "anime-figurine-standard",
+        "description": "High-detail anime figurine, 15cm tall. Available in PLA or PETG.",
+        "categoryId": "cmrehv3d40001g4p9tpa4mpat",
+        "basePrice": "299",
+        "salePrice": null,
+        "sku": "FIG-001",
+        "stockQuantity": 20,
+        "isActive": true,
+        "isFeatured": true,
+        "weight": null,
+        "dimensions": null,
+        "tags": "figurine, anime, collectible",
+        "createdAt": "2026-07-10T05:27:44.266Z",
+        "updatedAt": "2026-07-10T05:27:44.266Z"
+      },
+      {
+        "id": "cmrehv3ro000ag4p9num1srwb",
+        "name": "Mechanical Clicker Pro",
+        "slug": "mechanical-clicker-pro",
+        "description": "Satisfying desk clicker with mechanical switch. Stress reliever.",
+        "categoryId": "cmrehv3fh0002g4p9z0jkukcb",
+        "basePrice": "199",
+        "salePrice": null,
+        "sku": "CLK-001",
+        "stockQuantity": 35,
+        "isActive": true,
+        "isFeatured": false,
+        "weight": null,
+        "dimensions": null,
+        "tags": "clicker, desk, fidget",
+        "createdAt": "2026-07-10T05:27:44.340Z",
+        "updatedAt": "2026-07-10T05:27:44.340Z"
+      },
+      {
+        "id": "cmrehv3u1000dg4p937pc8qb2",
+        "name": "Desk Name Plate",
+        "slug": "desk-name-plate",
+        "description": "Professional desk nameplate. Custom text, choice of color.",
+        "categoryId": "cmrehv3hj0003g4p90p3iye0o",
+        "basePrice": "150",
+        "salePrice": null,
+        "sku": "NPL-001",
+        "stockQuantity": 40,
+        "isActive": true,
+        "isFeatured": false,
+        "weight": null,
+        "dimensions": null,
+        "tags": "nameplate, desk, custom",
+        "createdAt": "2026-07-10T05:27:44.425Z",
+        "updatedAt": "2026-07-10T05:27:44.425Z"
+      },
+      {
+        "id": "cmrehv3we000gg4p9f0m0hz5m",
+        "name": "Business Logo Keychain",
+        "slug": "business-logo-keychain",
+        "description": "Custom keychain with your business logo. Great for corporate giveaways.",
+        "categoryId": "cmrehv3a90000g4p9o9yvtwyi",
+        "basePrice": "99",
+        "salePrice": "79",
+        "sku": "KCH-002",
+        "stockQuantity": 100,
+        "isActive": true,
+        "isFeatured": false,
+        "weight": null,
+        "dimensions": null,
+        "tags": "keychain, business, logo, giveaway",
+        "createdAt": "2026-07-10T05:27:44.510Z",
+        "updatedAt": "2026-07-10T05:27:44.510Z"
+      }
+    ],
+    "productImage": [
+      {
+        "id": "cmrehv3nf0005g4p9x5kiaabo",
+        "productId": "cmrehv3nd0004g4p96fupd3cd",
+        "url": "https://placehold.co/600x600?text=Keychain",
+        "altText": "Custom Name Keychain",
+        "sortOrder": 0,
+        "isPrimary": true
+      },
+      {
+        "id": "cmrehv3pn0008g4p96u7ox5l7",
+        "productId": "cmrehv3pm0007g4p9rohfdgei",
+        "url": "https://placehold.co/600x600?text=Figurine",
+        "altText": "Anime Figurine",
+        "sortOrder": 0,
+        "isPrimary": true
+      },
+      {
+        "id": "cmrehv3rq000bg4p9lj3xwf2j",
+        "productId": "cmrehv3ro000ag4p9num1srwb",
+        "url": "https://placehold.co/600x600?text=Clicker",
+        "altText": "Mechanical Clicker",
+        "sortOrder": 0,
+        "isPrimary": true
+      },
+      {
+        "id": "cmrehv3u2000eg4p9n5gmex7b",
+        "productId": "cmrehv3u1000dg4p937pc8qb2",
+        "url": "https://placehold.co/600x600?text=Nameplate",
+        "altText": "Desk Name Plate",
+        "sortOrder": 0,
+        "isPrimary": true
+      },
+      {
+        "id": "cmrehv3wf000hg4p93zaz30cq",
+        "productId": "cmrehv3we000gg4p9f0m0hz5m",
+        "url": "https://placehold.co/600x600?text=Logo+Keychain",
+        "altText": "Business Logo Keychain",
+        "sortOrder": 0,
+        "isPrimary": true
+      }
+    ],
+    "costConfig": [
+      {
+        "id": "cmrehv3nf0006g4p9w7ay9sna",
+        "productId": "cmrehv3nd0004g4p96fupd3cd",
+        "filamentGrams": 15,
+        "filamentCostPerG": "1.2",
+        "printHours": 1.5,
+        "electricityKwh": 0.15,
+        "electricityCost": "12",
+        "laborHours": 0.25,
+        "laborRatePerHour": "80",
+        "packagingCost": "10",
+        "shippingCost": "0",
+        "profitMargin": 0.35
+      },
+      {
+        "id": "cmrehv3pn0009g4p9zunbq3n3",
+        "productId": "cmrehv3pm0007g4p9rohfdgei",
+        "filamentGrams": 80,
+        "filamentCostPerG": "1.2",
+        "printHours": 8,
+        "electricityKwh": 0.8,
+        "electricityCost": "12",
+        "laborHours": 1,
+        "laborRatePerHour": "80",
+        "packagingCost": "25",
+        "shippingCost": "0",
+        "profitMargin": 0.4
+      },
+      {
+        "id": "cmrehv3rq000cg4p9n3nh9zye",
+        "productId": "cmrehv3ro000ag4p9num1srwb",
+        "filamentGrams": 40,
+        "filamentCostPerG": "1.2",
+        "printHours": 3,
+        "electricityKwh": 0.3,
+        "electricityCost": "12",
+        "laborHours": 0.5,
+        "laborRatePerHour": "80",
+        "packagingCost": "15",
+        "shippingCost": "0",
+        "profitMargin": 0.3
+      },
+      {
+        "id": "cmrehv3u3000fg4p9kwew4z0n",
+        "productId": "cmrehv3u1000dg4p937pc8qb2",
+        "filamentGrams": 50,
+        "filamentCostPerG": "1",
+        "printHours": 2.5,
+        "electricityKwh": 0.25,
+        "electricityCost": "12",
+        "laborHours": 0.3,
+        "laborRatePerHour": "80",
+        "packagingCost": "12",
+        "shippingCost": "0",
+        "profitMargin": 0.3
+      }
+    ],
+    "filament": [
+      {
+        "id": "fil_pla_orange",
+        "name": "PLA+ Orange",
+        "materialId": "cmrehv40s000jg4p9th933bd0",
+        "supplierId": "sup_bambu",
+        "color": "Orange",
+        "colorHex": "#f97316",
+        "weightGrams": 1000,
+        "pricePerKg": "1200",
+        "stockGrams": 750,
+        "lowStockAlertG": 200,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.204Z",
+        "updatedAt": "2026-07-10T05:27:45.204Z"
+      },
+      {
+        "id": "fil_pla_black",
+        "name": "PLA Black",
+        "materialId": "cmrehv3yi000ig4p9mvdkkp3d",
+        "supplierId": "sup_esun",
+        "color": "Black",
+        "colorHex": "#1e293b",
+        "weightGrams": 1000,
+        "pricePerKg": "850",
+        "stockGrams": 95,
+        "lowStockAlertG": 200,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.281Z",
+        "updatedAt": "2026-07-10T05:27:45.281Z"
+      },
+      {
+        "id": "fil_petg_clear",
+        "name": "PETG Clear",
+        "materialId": "cmrehv42v000kg4p9qz6jpmbr",
+        "supplierId": "sup_bambu",
+        "color": "Clear",
+        "colorHex": "#e2e8f0",
+        "weightGrams": 750,
+        "pricePerKg": "1400",
+        "stockGrams": 50,
+        "lowStockAlertG": 150,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.356Z",
+        "updatedAt": "2026-07-10T05:27:45.356Z"
+      },
+      {
+        "id": "fil_pla_white",
+        "name": "PLA White",
+        "materialId": "cmrehv3yi000ig4p9mvdkkp3d",
+        "supplierId": "sup_esun",
+        "color": "White",
+        "colorHex": "#f8fafc",
+        "weightGrams": 1000,
+        "pricePerKg": "850",
+        "stockGrams": 920,
+        "lowStockAlertG": 200,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.430Z",
+        "updatedAt": "2026-07-10T05:27:45.430Z"
+      },
+      {
+        "id": "fil_abs_red",
+        "name": "ABS Red",
+        "materialId": "cmrehv44x000lg4p9nvkrgbj3",
+        "supplierId": "sup_polymaker",
+        "color": "Red",
+        "colorHex": "#ef4444",
+        "weightGrams": 1000,
+        "pricePerKg": "1100",
+        "stockGrams": 450,
+        "lowStockAlertG": 200,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.504Z",
+        "updatedAt": "2026-07-10T05:27:45.504Z"
+      },
+      {
+        "id": "fil_tpu_blue",
+        "name": "TPU Blue Flex",
+        "materialId": "cmrehv46y000mg4p927fn8w4p",
+        "supplierId": "sup_bambu",
+        "color": "Blue",
+        "colorHex": "#3b82f6",
+        "weightGrams": 500,
+        "pricePerKg": "1800",
+        "stockGrams": 320,
+        "lowStockAlertG": 100,
+        "isActive": true,
+        "createdAt": "2026-07-10T05:27:45.577Z",
+        "updatedAt": "2026-07-10T05:27:45.577Z"
+      }
+    ],
+    "stockMovement": [],
+    "order": [
+      {
+        "id": "cmrehv4wz000ng4p9p51mgqbb",
+        "orderNumber": "KAI-SEED-001",
+        "userId": "user_customer_seed",
+        "addressId": null,
+        "status": "DELIVERED",
+        "subtotal": "388",
+        "shippingFee": "100",
+        "discount": "0",
+        "total": "488",
+        "notes": null,
+        "trackingNumber": null,
+        "createdAt": "2026-07-10T05:27:45.827Z",
+        "updatedAt": "2026-07-10T05:27:45.827Z"
+      },
+      {
+        "id": "cmrehv4z9000wg4p9il8z8ntm",
+        "orderNumber": "KAI-SEED-002",
+        "userId": "user_customer_seed",
+        "addressId": null,
+        "status": "PRINTING",
+        "subtotal": "299",
+        "shippingFee": "100",
+        "discount": "0",
+        "total": "399",
+        "notes": null,
+        "trackingNumber": null,
+        "createdAt": "2026-07-10T05:27:45.909Z",
+        "updatedAt": "2026-07-10T05:27:45.909Z"
+      }
+    ],
+    "orderItem": [
+      {
+        "id": "cmrehv4x0000og4p9uo4738o0",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "productId": "cmrehv3nd0004g4p96fupd3cd",
+        "quantity": 2,
+        "unitPrice": "89",
+        "totalPrice": "178"
+      },
+      {
+        "id": "cmrehv4x0000pg4p9qf9pttlf",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "productId": "cmrehv3u1000dg4p937pc8qb2",
+        "quantity": 1,
+        "unitPrice": "150",
+        "totalPrice": "150"
+      },
+      {
+        "id": "cmrehv4x0000qg4p9npms5qqb",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "productId": "cmrehv3we000gg4p9f0m0hz5m",
+        "quantity": 1,
+        "unitPrice": "79",
+        "totalPrice": "79"
+      },
+      {
+        "id": "cmrehv4za000xg4p94qqzadop",
+        "orderId": "cmrehv4z9000wg4p9il8z8ntm",
+        "productId": "cmrehv3pm0007g4p9rohfdgei",
+        "quantity": 1,
+        "unitPrice": "299",
+        "totalPrice": "299"
+      }
+    ],
+    "orderStatusLog": [
+      {
+        "id": "cmrehv4x0000rg4p9jk6i9dl1",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "status": "PENDING",
+        "notes": "Order placed",
+        "changedBy": null,
+        "createdAt": "2025-07-01T00:00:00.000Z"
+      },
+      {
+        "id": "cmrehv4x0000sg4p9prfmpplm",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "status": "CONFIRMED",
+        "notes": "Payment verified",
+        "changedBy": null,
+        "createdAt": "2025-07-01T00:00:00.000Z"
+      },
+      {
+        "id": "cmrehv4x0000tg4p9hu56d7fh",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "status": "PRINTING",
+        "notes": "Printing started",
+        "changedBy": null,
+        "createdAt": "2025-07-02T00:00:00.000Z"
+      },
+      {
+        "id": "cmrehv4x0000ug4p9wgtoehnb",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "status": "SHIPPED",
+        "notes": "Dispatched via J&T",
+        "changedBy": null,
+        "createdAt": "2025-07-03T00:00:00.000Z"
+      },
+      {
+        "id": "cmrehv4x0000vg4p9mwswdhdx",
+        "orderId": "cmrehv4wz000ng4p9p51mgqbb",
+        "status": "DELIVERED",
+        "notes": "Delivered",
+        "changedBy": null,
+        "createdAt": "2025-07-04T00:00:00.000Z"
+      },
+      {
+        "id": "cmrehv4za000yg4p9skrg4uhv",
+        "orderId": "cmrehv4z9000wg4p9il8z8ntm",
+        "status": "PENDING",
+        "notes": "Order placed",
+        "changedBy": null,
+        "createdAt": "2026-07-10T05:27:45.909Z"
+      },
+      {
+        "id": "cmrehv4za000zg4p98qm1g2sb",
+        "orderId": "cmrehv4z9000wg4p9il8z8ntm",
+        "status": "CONFIRMED",
+        "notes": "Payment verified",
+        "changedBy": null,
+        "createdAt": "2026-07-10T05:27:45.909Z"
+      },
+      {
+        "id": "cmrehv4za0010g4p9zipkcoci",
+        "orderId": "cmrehv4z9000wg4p9il8z8ntm",
+        "status": "IN_PRINT_QUEUE",
+        "notes": "Added to print queue",
+        "changedBy": null,
+        "createdAt": "2026-07-10T05:27:45.909Z"
+      },
+      {
+        "id": "cmrehv4za0011g4p9j17r1xk1",
+        "orderId": "cmrehv4z9000wg4p9il8z8ntm",
+        "status": "PRINTING",
+        "notes": "Now printing on Bambu X1 Carbon",
+        "changedBy": null,
+        "createdAt": "2026-07-10T05:27:45.909Z"
+      }
+    ],
+    "quotation": [],
+    "invoice": [],
+    "printJob": [],
+    "maintenanceLog": [],
+    "review": [],
+    "reviewReply": [],
+    "cartItem": [],
+    "wishlistItem": []
+  }
+}

@@ -14,10 +14,15 @@ export async function proxy(request: NextRequest) {
   const hasAdminSession = verifyAdminSessionToken(request.cookies.get(ADMIN_SESSION_COOKIE)?.value)
 
   const { url: supabaseUrl, key: supabaseKey, isConfigured } = getSupabaseEnv()
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true'
 
-  // Without Supabase configured, the static admin session is the only way in —
-  // gated routes must NOT be left wide open.
+  // Without Supabase configured: Dev Mode skips auth entirely (local convenience).
+  // Otherwise the static admin session is the only way in — gated routes must NOT
+  // be left wide open, which is why Dev Mode must stay "false" in production.
   if (!isConfigured) {
+    if (isDevMode) {
+      return NextResponse.next({ request })
+    }
     if (!hasAdminSession && (isAdminRoute || isAccountRoute)) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'

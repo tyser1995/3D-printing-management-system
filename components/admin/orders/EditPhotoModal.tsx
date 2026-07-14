@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Upload, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 
@@ -15,7 +15,32 @@ interface Props {
 export default function EditPhotoModal({ orderId, initialPhotoUrl, onClose, onSaved }: Props) {
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl ?? '')
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setUploading(true)
+    setError(null)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      body.append('folder', 'orders')
+      const res = await fetch('/api/admin/upload', { method: 'POST', body })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error ?? 'Failed to upload photo')
+        return
+      }
+      setPhotoUrl(json.data.url)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,8 +79,25 @@ export default function EditPhotoModal({ orderId, initialPhotoUrl, onClose, onSa
             type="url"
             value={photoUrl}
             onChange={(e) => setPhotoUrl(e.target.value)}
-            placeholder="https://..."
+            placeholder="Paste an image URL..."
             hint="Optional — a photo of the finished print, once it's done."
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            loading={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-3.5 w-3.5" /> Upload from device
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleFileChange}
           />
 
           {photoUrl && (

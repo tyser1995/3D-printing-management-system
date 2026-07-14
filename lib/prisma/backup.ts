@@ -6,6 +6,7 @@ export const BACKUP_MODELS = [
   'user',
   'category',
   'supplier',
+  'purchase',
   'filamentMaterial',
   'printer',
   'address',

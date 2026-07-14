@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Upload } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 
@@ -41,6 +42,8 @@ export default function ProductFormModal({
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState<ProductFormData>({
     name: initial?.name ?? '',
     description: initial?.description ?? '',
@@ -64,6 +67,29 @@ export default function ProductFormModal({
     (key: keyof ProductFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((p) => ({ ...p, [key]: e.target.value }))
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setUploading(true)
+    setError('')
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      body.append('folder', 'products')
+      const res = await fetch('/api/admin/upload', { method: 'POST', body })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error ?? 'Failed to upload image')
+        return
+      }
+      setForm((p) => ({ ...p, imageUrl: json.data.url }))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,13 +188,42 @@ export default function ProductFormModal({
             />
           </div>
 
-          <Input
-            label="Image URL"
-            type="url"
-            value={form.imageUrl}
-            onChange={set('imageUrl')}
-            placeholder="https://..."
-          />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Image</label>
+            <div className="flex items-start gap-3">
+              {form.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.imageUrl}
+                  alt="Preview"
+                  className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 object-cover"
+                />
+              )}
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={form.imageUrl}
+                  onChange={set('imageUrl')}
+                  placeholder="Paste an image URL..."
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5" /> Upload Image
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+            </div>
+          </div>
           <Input
             label="Tags (comma separated)"
             value={form.tags}

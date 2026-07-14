@@ -2,6 +2,8 @@
 
 A full-stack platform for managing a custom 3D printing business — combining an e-commerce storefront, production management, inventory tracking, reporting, and an AI customization lab.
 
+The storefront homepage includes an **Available Filament Colors** section that reads live inventory — it lists every color with active, in-stock filament (`Filament.stockGrams > 0`) as a swatch, and disappears entirely when nothing is in stock. (`components/landing/AvailableColorsSection.tsx`)
+
 See [CHANGELOG.md](./CHANGELOG.md) for recent changes.
 
 ## Tech Stack
@@ -101,12 +103,14 @@ stores/           # Zustand stores (cart, etc.)
 The Settings page (`/admin/settings`) covers more than shop info:
 
 - **Product Categories** — add, edit, and delete categories inline.
+- **Filament Materials** — add, edit, and delete the material types (PLA, PETG, etc.) used when adding filaments in Inventory. Deletion is blocked while a filament still references the material.
+- **Suppliers** — add, edit, and deactivate suppliers, shared between Inventory (filaments) and Purchases. Deactivating doesn't remove the record, since past filaments/purchases may still reference it.
 - **Data Visibility** — "Show deleted orders" / "Show deleted products" (both off by default). Deleting a cancelled order or a product hides it from its list rather than destroying it; these toggles reveal it again.
 - **Sample Data** — load or remove a local data snapshot (`data/sample-data.json`) without disturbing whatever else is currently in the database. This file is gitignored — it's a local convenience snapshot, not something bundled with the repo, so a fresh clone won't have one until you create it (e.g. via Data Backup export, renamed to `data/sample-data.json`).
 - **Data Backup** — export the full database to a JSON file, or import one to restore it (this replaces all current data — confirmed before running).
 - **Cloud Sync** — push or pull a live copy of your data to/from Supabase without leaving the app (see below).
 
-New products auto-generate their SKU, continuing whichever prefix a category already uses (`KCH-001` → `KCH-002`); a brand-new category derives a prefix from its name.
+New products auto-generate their SKU, continuing whichever prefix a category already uses (`KCH-001` → `KCH-002`); a brand-new category derives a prefix from its name. The Add/Edit Product form can either take a pasted image URL or an uploaded file — uploads save to `public/uploads/products/` on local disk (gitignored) since no cloud storage is configured.
 
 ## Orders
 
@@ -118,7 +122,18 @@ From an order's detail page (`/admin/orders/[id]`) an admin can:
 - View **Notes** and add/edit the **Ship To** address inline
 - Add an optional **Printed Photo** once the order reaches "Printed" or later in the pipeline
 
-Products, Orders, and Customers lists all paginate at 10 rows per page.
+Products, Orders, Customers, and Purchases lists all paginate at 10 rows per page.
+
+## Purchases
+
+`/admin/purchases` tracks what the shop buys, not what customers buy — raw materials, hardware, and consumables like keychain rings/chains, mechanical switches, or filament refill orders. Each entry has:
+
+- An item name and a free-text category (with suggestions: Keychain Materials, Switches, Filament, Packaging, Tools, Other)
+- An optional supplier (reuses the same `Supplier` records as Inventory)
+- Quantity, unit, and unit cost — total cost is computed automatically
+- A status: **Ordered** → **Received** or **Cancelled**, with a one-click "mark received" action from the list
+
+Entries can be edited after the fact via the pencil icon. This is intentionally separate from the Inventory module's filament stock tracking — it's a purchase log, not a stock-level system.
 
 ## Switching to Supabase
 

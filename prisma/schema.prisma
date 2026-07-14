@@ -52,6 +52,12 @@ enum StockMovementType {
   ADJUSTMENT
 }
 
+enum PurchaseStatus {
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
 // ─── USER & AUTH ─────────────────────────────────────────────────────────────
 
 model User {
@@ -353,8 +359,32 @@ model Supplier {
   createdAt DateTime   @default(now())
 
   filaments Filament[]
+  purchases Purchase[]
 
   @@map("suppliers")
+}
+
+// ─── PURCHASING ────────────────────────────────────────────────────────────────
+
+model Purchase {
+  id         String         @id @default(cuid())
+  itemName   String
+  category   String
+  supplierId String?
+  quantity   Float
+  unit       String         @default("pcs")
+  unitCost   Decimal
+  totalCost  Decimal
+  status     PurchaseStatus @default(ORDERED)
+  orderedAt  DateTime       @default(now())
+  receivedAt DateTime?
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@map("purchases")
 }
 
 model FilamentMaterial {

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Printer, Mail, Phone, MapPin } from 'lucide-react'
 import { FaFacebook, FaInstagram } from 'react-icons/fa'
+import Image from 'next/image'
 
 const footerLinks = {
   Shop: [
@@ -31,14 +32,16 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-bold text-white">
-              <Printer className="h-7 w-7 text-orange-400" />
+              <Image src="/images/logo.svg" alt="KAI3D" width={40} height={40} priority />
               <span className="text-xl">
                 Kai<span className="text-orange-400">3D</span>
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
-              Professional 3D printing services and management platform for custom keychains,
-              figurines, and more.
+              Custom 3D-Printed Keychains, Fidgets, Name Plates, Souvenirs, Desk Accessories & More.
+              Personalized designs for gifts, events, businesses, and everyday use.
+              {/* Professional 3D printing services and management platform for custom keychains,
+              figurines, and more. */}
             </p>
             <div className="mt-4 flex flex-col gap-2 text-sm text-slate-400">
               <a

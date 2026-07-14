@@ -3,6 +3,8 @@ import { join } from 'path'
 import AdminHeader from '@/components/layout/AdminHeader'
 import SettingsClient from './SettingsClient'
 import CategoriesManager from './CategoriesManager'
+import MaterialsManager from './MaterialsManager'
+import SuppliersManager from './SuppliersManager'
 import BackupManager from './BackupManager'
 import SampleDataManager from './SampleDataManager'
 import DataVisibilityManager from './DataVisibilityManager'
@@ -26,11 +28,19 @@ async function loadSampleDataEnabled() {
 }
 
 export default async function AdminSettingsPage() {
-  const [settings, categories, sampleDataEnabled] = await Promise.all([
+  const [settings, categories, materials, suppliers, sampleDataEnabled] = await Promise.all([
     getSettings(),
     prisma.category.findMany({
       include: { _count: { select: { products: true } } },
       orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.filamentMaterial.findMany({
+      include: { _count: { select: { filaments: true } } },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.supplier.findMany({
+      include: { _count: { select: { filaments: true, purchases: true } } },
+      orderBy: { name: 'asc' },
     }),
     loadSampleDataEnabled(),
   ])
@@ -43,6 +53,8 @@ export default async function AdminSettingsPage() {
         <div className="mx-auto max-w-2xl space-y-6">
           <SettingsClient initialSettings={settings} />
           <CategoriesManager initialCategories={categories} />
+          <MaterialsManager initialMaterials={materials} />
+          <SuppliersManager initialSuppliers={suppliers} />
           <DataVisibilityManager initialDisplay={settings.display ?? {}} />
           <SampleDataManager initialEnabled={sampleDataEnabled} />
           <BackupManager dbSource={dbSource} />

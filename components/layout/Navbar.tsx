@@ -16,6 +16,8 @@ const navLinks = [
   { href: '/lab', label: '✦ AI Lab' },
 ]
 
+const isViewPageMode = process.env.NEXT_PUBLIC_VIEW_PAGE_MODE === 'true'
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -58,37 +60,43 @@ export default function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/cart"
-            className="relative rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
-                {itemCount > 9 ? '9+' : itemCount}
-              </span>
-            )}
-          </Link>
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/register">
-            <Button size="sm">Get Started</Button>
-          </Link>
+          {!isViewPageMode && (
+            <>
+              <Link
+                href="/cart"
+                className="relative rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
+              </Link>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">Get Started</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile: cart + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
-          <Link href="/cart" className="relative rounded-lg p-2 text-slate-300">
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+          {!isViewPageMode && (
+            <Link href="/cart" className="relative rounded-lg p-2 text-slate-300">
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
@@ -119,16 +127,18 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))} */}
-            <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
-              <Link href="/login" onClick={() => setOpen(false)}>
-                <Button variant="outline" fullWidth>
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register" onClick={() => setOpen(false)}>
-                <Button fullWidth>Get Started</Button>
-              </Link>
-            </div>
+            {!isViewPageMode && (
+              <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
+                <Link href="/login" onClick={() => setOpen(false)}>
+                  <Button variant="outline" fullWidth>
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register" onClick={() => setOpen(false)}>
+                  <Button fullWidth>Get Started</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

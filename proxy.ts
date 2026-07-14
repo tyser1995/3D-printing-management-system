@@ -15,9 +15,9 @@ export async function proxy(request: NextRequest) {
 
   // Maintenance mode: everyone except an already-logged-in admin gets the maintenance
   // page. /login stays reachable so the admin can still sign in to lift it (there's no
-  // live toggle — MAINTENANCE_MODE is set via `vercel env` + a redeploy).
+  // live toggle — NEXT_PUBLIC_MAINTENANCE_MODE is set via `vercel env` + a redeploy).
   if (
-    process.env.MAINTENANCE_MODE === 'true' &&
+    process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true' &&
     !hasAdminSession &&
     pathname !== '/maintenance' &&
     pathname !== '/login'

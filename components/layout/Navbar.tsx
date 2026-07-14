@@ -90,10 +90,17 @@ export default function Navbar() {
             )}
           </Link>
           <button
-            onClick={() => setOpen(!open)}
-            className="rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            className="rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white active:bg-white/10"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? (
+              <X className="pointer-events-none h-5 w-5" />
+            ) : (
+              <Menu className="pointer-events-none h-5 w-5" />
+            )}
           </button>
         </div>
       </nav>
@@ -102,7 +109,7 @@ export default function Navbar() {
       {open && (
         <div className="border-t border-white/10 bg-[#1A1A1A] px-4 pb-4 md:hidden">
           <div className="mt-2 flex flex-col gap-1">
-            {navLinks.map((link) => (
+            {/* {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -111,7 +118,7 @@ export default function Navbar() {
               >
                 {link.label}
               </Link>
-            ))}
+            ))} */}
             <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
               <Link href="/login" onClick={() => setOpen(false)}>
                 <Button variant="outline" fullWidth>

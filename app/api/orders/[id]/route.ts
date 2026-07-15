@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
+import { calculateOrderElectricityFee } from '@/lib/utils/cost'
 import type { NextRequest } from 'next/server'
 
 interface OrderItemInput {
@@ -122,7 +123,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const newShipping =
       shippingFee !== undefined ? Number(shippingFee) : Number(existing.shippingFee)
     const newDiscount = discount !== undefined ? Number(discount) : Number(existing.discount)
-    const total = Math.max(0, subtotal + newShipping - newDiscount)
+    // Electricity fund is carved out of the item revenue: ₱10 per unit ordered,
+    // deducted from (subtotal + shipping) rather than charged on top.
+    const newElectricityFee = items
+      ? calculateOrderElectricityFee(itemsData.reduce((sum, i) => sum + i.quantity, 0))
+      : Number(existing.electricityFee)
+    const total = Math.max(0, subtotal + newShipping - newElectricityFee - newDiscount)
 
     const order = await prisma.$transaction(async (tx) => {
       if (items) {
@@ -137,6 +143,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         data: {
           subtotal,
           shippingFee: newShipping,
+          electricityFee: newElectricityFee,
           discount: newDiscount,
           total,
           ...(notes !== undefined && { notes }),

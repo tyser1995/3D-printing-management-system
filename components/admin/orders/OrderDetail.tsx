@@ -76,6 +76,7 @@ interface Order {
   status: string
   subtotal: number | string
   shippingFee: number | string
+  electricityFee: number | string
   discount: number | string
   total: number | string
   notes: string | null
@@ -290,6 +291,12 @@ export default function OrderDetail({
               <span>Shipping</span>
               <span>{formatCurrency(Number(order.shippingFee))}</span>
             </div>
+            {Number(order.electricityFee) > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Electricity Fund</span>
+                <span>−{formatCurrency(Number(order.electricityFee))}</span>
+              </div>
+            )}
             {Number(order.discount) > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount</span>
@@ -425,6 +432,7 @@ export default function OrderDetail({
               ...prev,
               subtotal: u.subtotal,
               shippingFee: u.shippingFee,
+              electricityFee: u.electricityFee,
               discount: u.discount,
               total: u.total,
               notes: u.notes,

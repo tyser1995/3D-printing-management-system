@@ -220,6 +220,7 @@ model Order {
   status         OrderStatus @default(PENDING)
   subtotal       Decimal
   shippingFee    Decimal     @default(0)
+  electricityFee Decimal     @default(0)
   discount       Decimal     @default(0)
   total          Decimal
   notes          String?

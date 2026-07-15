@@ -47,3 +47,11 @@ export function calculateCost(inputs: CostInputs): CostBreakdown {
 function round(n: number) {
   return Math.round(n * 100) / 100
 }
+
+// Flat per-unit electricity surcharge added to every order, on top of each
+// product's own CostConfig.electricityCost (which prices the print job itself).
+export const ORDER_ELECTRICITY_FEE_PER_UNIT = 10
+
+export function calculateOrderElectricityFee(totalQuantity: number): number {
+  return round(totalQuantity * ORDER_ELECTRICITY_FEE_PER_UNIT)
+}

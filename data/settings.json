@@ -21,5 +21,9 @@
     "showDeletedOrders": false,
     "showDeletedProducts": false,
     "showStyleGuide": false
+  },
+  "storage": {
+    "provider": "local",
+    "supabaseBucket": "uploads"
   }
 }

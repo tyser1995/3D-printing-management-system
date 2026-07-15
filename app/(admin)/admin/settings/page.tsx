@@ -10,6 +10,7 @@ import SampleDataManager from './SampleDataManager'
 import DataVisibilityManager from './DataVisibilityManager'
 import { prisma } from '@/lib/prisma/client'
 import { getSettings } from '@/lib/settings'
+import { isSupabaseAdminConfigured } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Settings | Admin' }
@@ -51,7 +52,10 @@ export default async function AdminSettingsPage() {
       <AdminHeader title="Settings" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto max-w-2xl space-y-6">
-          <SettingsClient initialSettings={settings} />
+          <SettingsClient
+            initialSettings={settings}
+            supabaseConfigured={isSupabaseAdminConfigured()}
+          />
           <CategoriesManager initialCategories={categories} />
           <MaterialsManager initialMaterials={materials} />
           <SuppliersManager initialSuppliers={suppliers} />

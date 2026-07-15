@@ -20,10 +20,15 @@ interface Settings {
     emailPrintDone?: boolean
     smsOrderShipped?: boolean
   }
+  storage?: {
+    provider?: 'local' | 'supabase'
+    supabaseBucket?: string
+  }
 }
 
 interface Props {
   initialSettings: Settings
+  supabaseConfigured: boolean
 }
 
 interface SaveBtnProps {
@@ -48,7 +53,7 @@ function SaveBtn({ loading, saved, onClick }: SaveBtnProps) {
   )
 }
 
-export default function SettingsClient({ initialSettings }: Props) {
+export default function SettingsClient({ initialSettings, supabaseConfigured }: Props) {
   const [shop, setShop] = useState({
     name: initialSettings.shop?.name ?? 'Kai3D',
     email: initialSettings.shop?.email ?? 'hello@kai3d.ph',
@@ -66,6 +71,10 @@ export default function SettingsClient({ initialSettings }: Props) {
     emailLowStock: initialSettings.notifications?.emailLowStock ?? true,
     emailPrintDone: initialSettings.notifications?.emailPrintDone ?? true,
     smsOrderShipped: initialSettings.notifications?.smsOrderShipped ?? false,
+  })
+  const [storage, setStorage] = useState({
+    provider: initialSettings.storage?.provider ?? 'local',
+    supabaseBucket: initialSettings.storage?.supabaseBucket ?? 'uploads',
   })
 
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
@@ -185,6 +194,73 @@ export default function SettingsClient({ initialSettings }: Props) {
               onClick={() => save('notifications', notifs)}
             />
           </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Image Storage</CardTitle>
+        </CardHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Choose where uploaded product and order photos are saved.
+          </p>
+          <div className="space-y-2">
+            {(
+              [
+                {
+                  value: 'local' as const,
+                  label: 'Local (public/uploads)',
+                  hint: 'Stored on this server’s disk. Simplest, but files don’t survive a redeploy on most hosts.',
+                },
+                {
+                  value: 'supabase' as const,
+                  label: 'Supabase Storage',
+                  hint: 'Stored in your Supabase project’s storage bucket. Persists across deploys.',
+                },
+              ] as const
+            ).map(({ value, label, hint }) => (
+              <label
+                key={value}
+                className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 hover:bg-slate-50"
+              >
+                <input
+                  type="radio"
+                  name="storageProvider"
+                  checked={storage.provider === value}
+                  onChange={() => setStorage((p) => ({ ...p, provider: value }))}
+                  className="mt-0.5 h-4 w-4 accent-[#6EC30B]"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-slate-900">{label}</span>
+                  <span className="block text-xs text-slate-500">{hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {storage.provider === 'supabase' && (
+            <>
+              {!supabaseConfigured && (
+                <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+                  Supabase isn&apos;t configured yet (missing NEXT_PUBLIC_SUPABASE_URL /
+                  SUPABASE_SERVICE_ROLE_KEY). Uploads will fall back to local storage until it is.
+                </p>
+              )}
+              <Input
+                label="Storage Bucket"
+                value={storage.supabaseBucket}
+                onChange={(e) => setStorage((p) => ({ ...p, supabaseBucket: e.target.value }))}
+                placeholder="uploads"
+              />
+            </>
+          )}
+
+          <SaveBtn
+            loading={loadingSection === 'storage'}
+            saved={savedSection === 'storage'}
+            onClick={() => save('storage', storage)}
+          />
         </div>
       </Card>
     </>

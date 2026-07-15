@@ -20,6 +20,10 @@ export interface AppSettings {
     showDeletedProducts?: boolean
     showStyleGuide?: boolean
   }
+  storage?: {
+    provider?: 'local' | 'supabase'
+    supabaseBucket?: string
+  }
 }
 
 export async function getSettings(): Promise<AppSettings> {

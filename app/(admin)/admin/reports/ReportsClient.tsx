@@ -37,6 +37,7 @@ interface Fulfillment {
   orderedItems: number
   deliveredItems: number
   deliveredPct: number
+  electricityFund: number
 }
 
 interface Props {
@@ -205,7 +206,7 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
         <CardHeader>
           <CardTitle>Delivered vs Ordered (All-Time)</CardTitle>
         </CardHeader>
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-3">
           <div>
             <p className="text-sm text-slate-500">Revenue</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -235,6 +236,15 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
             <p className="mt-3 text-xs text-slate-500">
               &ldquo;Ordered&rdquo; excludes cancelled/returned orders. &ldquo;Delivered&rdquo;
               counts only orders that have reached the Delivered status.
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-slate-500">Electricity Fund</p>
+            <p className="mt-1 text-2xl font-bold text-green-600">
+              {formatCurrency(fulfillment.electricityFund)}
+            </p>
+            <p className="mt-3 text-xs text-slate-500">
+              ₱10 × {fulfillment.deliveredItems} delivered units, deducted from item revenue.
             </p>
           </div>
         </div>

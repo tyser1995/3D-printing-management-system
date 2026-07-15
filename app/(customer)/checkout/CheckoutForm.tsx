@@ -8,12 +8,11 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { formatCurrency } from '@/lib/utils/format'
-
-const SHIPPING_FEE = 100
+import { calculateOrderElectricityFee } from '@/lib/utils/cost'
 
 export default function CheckoutForm() {
   const router = useRouter()
-  const { items, total, clearCart } = useCartStore()
+  const { items, total, itemCount, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<string | null>(null)
@@ -30,7 +29,8 @@ export default function CheckoutForm() {
   const [notes, setNotes] = useState('')
 
   const subtotal = total()
-  const orderTotal = subtotal + SHIPPING_FEE
+  const electricityFee = calculateOrderElectricityFee(itemCount())
+  const orderTotal = Math.max(0, subtotal - electricityFee)
 
   const set = (key: keyof typeof address) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setAddress((prev) => ({ ...prev, [key]: e.target.value }))
@@ -49,7 +49,6 @@ export default function CheckoutForm() {
         body: JSON.stringify({
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
           notes,
-          shippingFee: SHIPPING_FEE,
           // In production you'd create/find the address first; simplified here
         }),
       })
@@ -202,10 +201,12 @@ export default function CheckoutForm() {
                 <span>Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Shipping</span>
-                <span>{formatCurrency(SHIPPING_FEE)}</span>
-              </div>
+              {electricityFee > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Electricity Fund</span>
+                  <span>−{formatCurrency(electricityFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-slate-100 pt-2 font-semibold text-slate-900">
                 <span>Total</span>
                 <span>{formatCurrency(orderTotal)}</span>

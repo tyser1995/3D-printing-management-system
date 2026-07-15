@@ -135,6 +135,62 @@ export async function mergeBackup(prisma: PrismaClient, data: BackupData) {
   return counts
 }
 
+// Adds rows from `data` that aren't already present (by id), and overwrites
+// the fields of rows that are (regardless of whether anything actually
+// differs), so edits made to the bundled JSON (e.g. a filament price change)
+// reach the database. Rows not present in `data` are left alone — this never
+// deletes anything, even in production.
+export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
+  const counts: Partial<Record<BackupModel, { inserted: number; updated: number }>> = {}
+
+  await prisma.$transaction(
+    async (tx) => {
+      for (const model of BACKUP_MODELS) {
+        const rows = data[model] ?? []
+        if (rows.length === 0) continue
+
+        const ids = rows.map((r) => r.id)
+        const existing = await delegate(tx, model).findMany({
+          where: { id: { in: ids } },
+          select: { id: true },
+        })
+        const existingIds = new Set(existing.map((r) => r.id))
+        const toInsert = rows.filter((r) => !existingIds.has(r.id))
+        const toUpdate = rows.filter((r) => existingIds.has(r.id))
+
+        if (toInsert.length > 0) {
+          if (model === 'category') {
+            const flat = toInsert.map((r) => ({ ...r, parentId: null }))
+            await delegate(tx, model).createMany({ data: flat })
+            for (const row of toInsert) {
+              if (row.parentId) {
+                await delegate(tx, model).update({
+                  where: { id: row.id },
+                  data: { parentId: row.parentId },
+                })
+              }
+            }
+          } else {
+            await delegate(tx, model).createMany({ data: toInsert })
+          }
+        }
+
+        for (const row of toUpdate) {
+          const { id, ...fields } = row
+          await delegate(tx, model).update({ where: { id }, data: fields })
+        }
+
+        if (toInsert.length > 0 || toUpdate.length > 0) {
+          counts[model] = { inserted: toInsert.length, updated: toUpdate.length }
+        }
+      }
+    },
+    { timeout: 60_000 }
+  )
+
+  return counts
+}
+
 // Removes exactly the rows in `data` (by id), children first. Rows that fail
 // to delete (e.g. a real order referencing a sample product) are skipped and
 // reported rather than aborting the whole operation.

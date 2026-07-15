@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { FlaskConical } from 'lucide-react'
+import { FlaskConical, RefreshCw } from 'lucide-react'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -13,6 +14,7 @@ export default function SampleDataManager({ initialEnabled }: Props) {
   const router = useRouter()
   const [enabled, setEnabled] = useState(initialEnabled)
   const [loading, setLoading] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   const toggle = async () => {
@@ -43,6 +45,30 @@ export default function SampleDataManager({ initialEnabled }: Props) {
     }
   }
 
+  const update = async () => {
+    setUpdating(true)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/admin/sample-data', { method: 'PATCH' })
+      const json = await res.json()
+      if (res.ok) {
+        const counts = json.data.counts as Record<string, { inserted: number; updated: number }>
+        const inserted = Object.values(counts).reduce((a, c) => a + c.inserted, 0)
+        const updated = Object.values(counts).reduce((a, c) => a + c.updated, 0)
+        setMessage(
+          inserted || updated
+            ? `Sample data synced — ${updated} row${updated === 1 ? '' : 's'} refreshed, ${inserted} added.`
+            : 'No sample data to update yet.'
+        )
+        router.refresh()
+      } else {
+        setMessage(json.error ?? 'Failed to update sample data')
+      }
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -61,22 +87,30 @@ export default function SampleDataManager({ initialEnabled }: Props) {
           </div>
         </div>
 
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          disabled={loading}
-          onClick={toggle}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
-            enabled ? 'bg-[#6EC30B]' : 'bg-slate-300'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              enabled ? 'translate-x-6' : 'translate-x-1'
+        <div className="flex shrink-0 items-center gap-3">
+          {enabled && (
+            <Button type="button" variant="outline" size="sm" loading={updating} onClick={update}>
+              <RefreshCw className="h-3.5 w-3.5" /> Update Sample Data
+            </Button>
+          )}
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            disabled={loading}
+            onClick={toggle}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+              enabled ? 'bg-[#6EC30B]' : 'bg-slate-300'
             }`}
-          />
-        </button>
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </div>
     </Card>
   )

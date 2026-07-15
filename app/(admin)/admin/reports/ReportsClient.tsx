@@ -38,6 +38,9 @@ interface Fulfillment {
   deliveredItems: number
   deliveredPct: number
   electricityFund: number
+  totalPurchased: number
+  netAfterPurchases: number
+  takeHomeAmount: number
 }
 
 interface Props {
@@ -206,7 +209,7 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
         <CardHeader>
           <CardTitle>Delivered vs Ordered (All-Time)</CardTitle>
         </CardHeader>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-sm text-slate-500">Revenue</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -247,7 +250,41 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
               ₱10 × {fulfillment.deliveredItems} delivered units, deducted from item revenue.
             </p>
           </div>
+          <div>
+            <p className="text-sm text-slate-500">Delivered − Purchased</p>
+            <p
+              className={`mt-1 text-2xl font-bold ${
+                fulfillment.netAfterPurchases >= 0 ? 'text-green-600' : 'text-red-500'
+              }`}
+            >
+              {formatCurrency(fulfillment.netAfterPurchases)}
+            </p>
+            <p className="mt-3 text-xs text-slate-500">
+              {formatCurrency(fulfillment.deliveredRevenue)} delivered revenue minus{' '}
+              {formatCurrency(fulfillment.totalPurchased)} spent on material purchases (all-time,
+              cancelled purchases excluded).
+            </p>
+          </div>
         </div>
+      </Card>
+
+      {/* Take-home (all-time) */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Take-Home Amount (All-Time)</CardTitle>
+        </CardHeader>
+        <p
+          className={`text-3xl font-bold ${
+            fulfillment.takeHomeAmount >= 0 ? 'text-green-600' : 'text-red-500'
+          }`}
+        >
+          {formatCurrency(fulfillment.takeHomeAmount)}
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          {formatCurrency(fulfillment.deliveredRevenue)} delivered revenue − (
+          {formatCurrency(fulfillment.electricityFund)} electricity fund +{' '}
+          {formatCurrency(fulfillment.totalPurchased)} material purchases).
+        </p>
       </Card>
     </div>
   )

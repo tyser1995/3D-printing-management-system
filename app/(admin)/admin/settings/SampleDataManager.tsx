@@ -52,12 +52,18 @@ export default function SampleDataManager({ initialEnabled }: Props) {
       const res = await fetch('/api/admin/sample-data', { method: 'PATCH' })
       const json = await res.json()
       if (res.ok) {
-        const counts = json.data.counts as Record<string, { inserted: number; updated: number }>
+        const counts = json.data.counts as Record<
+          string,
+          { inserted: number; updated: number; skipped: number }
+        >
         const inserted = Object.values(counts).reduce((a, c) => a + c.inserted, 0)
         const updated = Object.values(counts).reduce((a, c) => a + c.updated, 0)
+        const skipped = Object.values(counts).reduce((a, c) => a + c.skipped, 0)
+        const parts = [`${updated} row${updated === 1 ? '' : 's'} refreshed`, `${inserted} added`]
+        if (skipped > 0) parts.push(`${skipped} skipped (name clashes with your own data)`)
         setMessage(
-          inserted || updated
-            ? `Sample data synced — ${updated} row${updated === 1 ? '' : 's'} refreshed, ${inserted} added.`
+          inserted || updated || skipped
+            ? `Sample data synced — ${parts.join(', ')}.`
             : 'No sample data to update yet.'
         )
         router.refresh()

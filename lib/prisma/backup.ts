@@ -42,6 +42,56 @@ function delegate(client: PrismaClient | Prisma.TransactionClient, model: Backup
   return (client as unknown as Record<BackupModel, Delegate>)[model]
 }
 
+// Unique constraints besides `id`, grouped so composite ones (like the
+// [userId, productId] on cart/wishlist items) are checked together. A sample
+// row can collide on one of these under a completely different id — e.g. a
+// category the user made themselves ends up with the same slug as a bundled
+// sample category — which would otherwise crash createMany with a unique
+// constraint error.
+const ALTERNATE_UNIQUE_KEYS: Partial<Record<BackupModel, string[][]>> = {
+  user: [['email']],
+  category: [['name'], ['slug']],
+  product: [['slug'], ['sku']],
+  costConfig: [['productId']],
+  order: [['orderNumber']],
+  quotation: [['orderId'], ['quoteNumber']],
+  invoice: [['orderId'], ['invoiceNumber']],
+  filamentMaterial: [['name']],
+  cartItem: [['userId', 'productId']],
+  wishlistItem: [['userId', 'productId']],
+  review: [['productId', 'userId']],
+}
+
+// Returns the ids of `rows` that collide with an existing row (under a
+// different id) on one of the model's alternate unique constraints. Those
+// rows can't be inserted as-is and aren't "ours" to overwrite either, since
+// they belong to whatever real record the user already created.
+async function findAlternateKeyConflicts(
+  tx: Prisma.TransactionClient,
+  model: BackupModel,
+  rows: Record<string, unknown>[]
+): Promise<Set<unknown>> {
+  const keyGroups = ALTERNATE_UNIQUE_KEYS[model]
+  const conflicts = new Set<unknown>()
+  if (!keyGroups || rows.length === 0) return conflicts
+
+  for (const keys of keyGroups) {
+    const candidates = rows.filter((r) => keys.every((k) => r[k] != null))
+    if (candidates.length === 0) continue
+
+    const existing = await delegate(tx, model).findMany({
+      where: { OR: candidates.map((r) => Object.fromEntries(keys.map((k) => [k, r[k]]))) },
+    })
+
+    for (const row of candidates) {
+      const collides = existing.some((e) => e.id !== row.id && keys.every((k) => e[k] === row[k]))
+      if (collides) conflicts.add(row.id)
+    }
+  }
+
+  return conflicts
+}
+
 export async function exportBackup(prisma: PrismaClient) {
   const data: BackupData = {}
   for (const model of BACKUP_MODELS) {
@@ -108,7 +158,11 @@ export async function mergeBackup(prisma: PrismaClient, data: BackupData) {
           select: { id: true },
         })
         const existingIds = new Set(existing.map((r) => r.id))
-        const toInsert = rows.filter((r) => !existingIds.has(r.id))
+        const notExisting = rows.filter((r) => !existingIds.has(r.id))
+        if (notExisting.length === 0) continue
+
+        const conflicts = await findAlternateKeyConflicts(tx, model, notExisting)
+        const toInsert = notExisting.filter((r) => !conflicts.has(r.id))
         if (toInsert.length === 0) continue
 
         if (model === 'category') {
@@ -141,7 +195,9 @@ export async function mergeBackup(prisma: PrismaClient, data: BackupData) {
 // reach the database. Rows not present in `data` are left alone — this never
 // deletes anything, even in production.
 export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
-  const counts: Partial<Record<BackupModel, { inserted: number; updated: number }>> = {}
+  const counts: Partial<
+    Record<BackupModel, { inserted: number; updated: number; skipped: number }>
+  > = {}
 
   await prisma.$transaction(
     async (tx) => {
@@ -155,8 +211,11 @@ export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
           select: { id: true },
         })
         const existingIds = new Set(existing.map((r) => r.id))
-        const toInsert = rows.filter((r) => !existingIds.has(r.id))
+        const notExisting = rows.filter((r) => !existingIds.has(r.id))
         const toUpdate = rows.filter((r) => existingIds.has(r.id))
+
+        const conflicts = await findAlternateKeyConflicts(tx, model, notExisting)
+        const toInsert = notExisting.filter((r) => !conflicts.has(r.id))
 
         if (toInsert.length > 0) {
           if (model === 'category') {
@@ -180,8 +239,12 @@ export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
           await delegate(tx, model).update({ where: { id }, data: fields })
         }
 
-        if (toInsert.length > 0 || toUpdate.length > 0) {
-          counts[model] = { inserted: toInsert.length, updated: toUpdate.length }
+        if (toInsert.length > 0 || toUpdate.length > 0 || conflicts.size > 0) {
+          counts[model] = {
+            inserted: toInsert.length,
+            updated: toUpdate.length,
+            skipped: conflicts.size,
+          }
         }
       }
     },

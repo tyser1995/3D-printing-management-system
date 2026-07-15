@@ -53,4 +53,4 @@ prisma/*.db-wal
 prisma/*.db-shm
 
 # locally-uploaded product images (no cloud storage configured)
-# /public/uploads/
+/public/uploads/

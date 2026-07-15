@@ -1,6 +1,7 @@
 import AdminHeader from '@/components/layout/AdminHeader'
 import ReportsClient from './ReportsClient'
 import { prisma } from '@/lib/prisma/client'
+import { ORDER_ELECTRICITY_FEE_PER_UNIT } from '@/lib/utils/cost'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Reports | Admin' }
@@ -93,13 +94,18 @@ export default async function AdminReportsPage() {
 
   const orderedRevenue = Number(orderedAgg._sum.totalPrice ?? 0)
   const deliveredRevenue = Number(deliveredAgg._sum.totalPrice ?? 0)
+  const deliveredItems = deliveredAgg._sum.quantity ?? 0
+  // ₱10 per unit, counted only once an order has actually been delivered,
+  // deducted from item revenue rather than charged on top.
+  const electricityFund = deliveredItems * ORDER_ELECTRICITY_FEE_PER_UNIT
 
   const fulfillment = {
     orderedRevenue,
     deliveredRevenue,
     orderedItems: orderedAgg._sum.quantity ?? 0,
-    deliveredItems: deliveredAgg._sum.quantity ?? 0,
+    deliveredItems,
     deliveredPct: orderedRevenue > 0 ? (deliveredRevenue / orderedRevenue) * 100 : 0,
+    electricityFund,
   }
 
   return (

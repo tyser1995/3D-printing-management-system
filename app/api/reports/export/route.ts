@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         'Items',
         'Subtotal',
         'Shipping',
+        'Electricity Fee',
         'Total',
         'Status',
       ]
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
         String(o._count.items),
         String(Number(o.subtotal)),
         String(Number(o.shippingFee)),
+        String(Number(o.electricityFee)),
         String(Number(o.total)),
         o.status,
       ])

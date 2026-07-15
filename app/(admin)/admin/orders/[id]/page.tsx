@@ -66,6 +66,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             status: order.status,
             subtotal: Number(order.subtotal),
             shippingFee: Number(order.shippingFee),
+            electricityFee: Number(order.electricityFee),
             discount: Number(order.discount),
             total: Number(order.total),
             notes: order.notes,

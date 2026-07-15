@@ -5,6 +5,7 @@ import { Plus, Trash2, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { formatCurrency } from '@/lib/utils/format'
+import { calculateOrderElectricityFee } from '@/lib/utils/cost'
 
 interface Product {
   id: string
@@ -63,7 +64,13 @@ export default function EditOrderModal({
       }, 0),
     [items, products]
   )
-  const total = Math.max(0, subtotal + (Number(shippingFee) || 0) - (Number(discount) || 0))
+  const electricityFee = calculateOrderElectricityFee(
+    items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+  )
+  const total = Math.max(
+    0,
+    subtotal + (Number(shippingFee) || 0) - electricityFee - (Number(discount) || 0)
+  )
 
   const updateItem = (index: number, patch: Partial<OrderItem>) => {
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)))
@@ -193,6 +200,13 @@ export default function EditOrderModal({
               className="block w-full resize-none rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
               placeholder="Optional notes..."
             />
+          </div>
+
+          <div className="flex items-center justify-between px-1 text-sm text-green-600">
+            <span>
+              Electricity Fund (₱10 × {items.reduce((sum, i) => sum + (i.quantity || 0), 0)} units)
+            </span>
+            <span>−{formatCurrency(electricityFee)}</span>
           </div>
 
           <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">

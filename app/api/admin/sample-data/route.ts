@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
-import { mergeBackup, removeBackup, type BackupData } from '@/lib/prisma/backup'
+import { mergeBackup, removeBackup, upsertBackup, type BackupData } from '@/lib/prisma/backup'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +37,20 @@ export async function POST() {
     return NextResponse.json({ data: { enabled: true, counts } })
   } catch (error) {
     console.error('[POST /api/admin/sample-data]', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// Re-applies the bundled dataset onto whatever's already loaded: new rows are
+// added and existing sample rows are updated to match the current JSON (e.g.
+// after editing prices or adding filament colors). Never deletes anything.
+export async function PATCH() {
+  try {
+    const { data } = await loadSampleData()
+    const counts = await upsertBackup(prisma, data)
+    return NextResponse.json({ data: { enabled: true, counts } })
+  } catch (error) {
+    console.error('[PATCH /api/admin/sample-data]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

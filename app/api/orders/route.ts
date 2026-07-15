@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 import { generateOrderNumber } from '@/lib/utils/format'
+import { calculateOrderElectricityFee } from '@/lib/utils/cost'
 import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { items, addressId, notes } = body
+    const { items, addressId, notes, shippingFee } = body
 
     const products = await prisma.product.findMany({
       where: { id: { in: items.map((i: { productId: string }) => i.productId) } },
@@ -60,13 +61,25 @@ export async function POST(request: NextRequest) {
       return sum + Number(product.salePrice ?? product.basePrice) * item.quantity
     }, 0)
 
+    const totalQuantity = items.reduce(
+      (sum: number, item: { quantity: number }) => sum + item.quantity,
+      0
+    )
+    // Electricity fund is carved out of the item revenue: ₱10 per unit ordered,
+    // deducted from (subtotal + shipping) rather than charged on top.
+    const electricityFee = calculateOrderElectricityFee(totalQuantity)
+    const shipping = Number(shippingFee) || 0
+    const total = Math.max(0, subtotal + shipping - electricityFee)
+
     const order = await prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),
         userId: user.id,
         addressId: addressId ?? null,
         subtotal,
-        total: subtotal,
+        shippingFee: shipping,
+        electricityFee,
+        total,
         notes: notes ?? null,
         items: {
           create: items.map((item: { productId: string; quantity: number }) => {

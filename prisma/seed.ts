@@ -422,35 +422,6 @@ async function main() {
 
   // ─── Sample Orders ─────────────────────────────────────────────────────────
   await prisma.order.upsert({
-    where: { orderNumber: 'KAI-SEED-001' },
-    update: {},
-    create: {
-      orderNumber: 'KAI-SEED-001',
-      userId: customerUser.id,
-      status: 'DELIVERED',
-      subtotal: 388,
-      shippingFee: 100,
-      total: 488,
-      items: {
-        create: [
-          { productId: products[0].id, quantity: 2, unitPrice: 89, totalPrice: 178 },
-          { productId: products[3].id, quantity: 1, unitPrice: 150, totalPrice: 150 },
-          { productId: products[4].id, quantity: 1, unitPrice: 79, totalPrice: 79 },
-        ],
-      },
-      statusLogs: {
-        create: [
-          { status: 'PENDING', notes: 'Order placed', createdAt: new Date('2025-07-01') },
-          { status: 'CONFIRMED', notes: 'Payment verified', createdAt: new Date('2025-07-01') },
-          { status: 'PRINTING', notes: 'Printing started', createdAt: new Date('2025-07-02') },
-          { status: 'SHIPPED', notes: 'Dispatched via J&T', createdAt: new Date('2025-07-03') },
-          { status: 'DELIVERED', notes: 'Delivered', createdAt: new Date('2025-07-04') },
-        ],
-      },
-    },
-  })
-
-  await prisma.order.upsert({
     where: { orderNumber: 'KAI-SEED-002' },
     update: {},
     create: {
@@ -473,7 +444,7 @@ async function main() {
       },
     },
   })
-  console.log(`✓ 2 sample orders`)
+  console.log(`✓ 1 sample order`)
 
   console.log('\n✅ Seed complete!')
 }

@@ -10,6 +10,8 @@ const features = [
   // { icon: Shield, text: 'Quality guaranteed or reprinted' },
 ]
 
+const isViewPageMode = process.env.NEXT_PUBLIC_VIEW_PAGE_MODE === 'true'
+
 export default async function HeroSection() {
   const deliveredCount = await prisma.order.count({
     where: { status: 'DELIVERED', deletedAt: null },
@@ -93,15 +95,17 @@ export default async function HeroSection() {
                   <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-white/20 px-8 py-4 text-base text-slate-300 hover:border-[#6EC30B]/50 hover:bg-[#6EC30B]/10 hover:text-white"
-                >
-                  Start Custom Order
-                </Button>
-              </Link>
+              {!isViewPageMode && (
+                <Link href="/register">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white/20 px-8 py-4 text-base text-slate-300 hover:border-[#6EC30B]/50 hover:bg-[#6EC30B]/10 hover:text-white"
+                  >
+                    Start Custom Order
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 

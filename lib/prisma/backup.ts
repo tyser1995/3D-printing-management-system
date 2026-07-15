@@ -92,6 +92,56 @@ async function findAlternateKeyConflicts(
   return conflicts
 }
 
+// Foreign keys (besides self-referencing category.parentId, handled inline)
+// that point at another BACKUP_MODELS row. When a row is skipped because it
+// collides with the user's own data (see findAlternateKeyConflicts), nothing
+// with that id ever gets inserted — so any row pointing at it via one of
+// these FKs must be skipped too, or the insert fails with a foreign key
+// constraint error instead of a unique constraint one.
+const FK_PARENTS: Partial<Record<BackupModel, Record<string, BackupModel>>> = {
+  address: { userId: 'user' },
+  product: { categoryId: 'category' },
+  productImage: { productId: 'product' },
+  costConfig: { productId: 'product' },
+  filament: { materialId: 'filamentMaterial', supplierId: 'supplier' },
+  stockMovement: { filamentId: 'filament' },
+  order: { userId: 'user', addressId: 'address' },
+  orderItem: { orderId: 'order', productId: 'product' },
+  orderStatusLog: { orderId: 'order' },
+  quotation: { orderId: 'order' },
+  invoice: { orderId: 'order' },
+  printJob: { orderId: 'order', printerId: 'printer' },
+  maintenanceLog: { printerId: 'printer' },
+  review: { productId: 'product', userId: 'user' },
+  reviewReply: { reviewId: 'review' },
+  cartItem: { userId: 'user', productId: 'product' },
+  wishlistItem: { userId: 'user', productId: 'product' },
+}
+
+// Splits `rows` into those safe to insert and those referencing an id that
+// was skipped earlier in this same run (BACKUP_MODELS is ordered parent-first,
+// so by the time a child model is processed every parent it could reference
+// has already been resolved).
+function splitCascadeSkipped(
+  model: BackupModel,
+  rows: Record<string, unknown>[],
+  skippedIds: Map<BackupModel, Set<unknown>>
+): { ok: Record<string, unknown>[]; skipped: Record<string, unknown>[] } {
+  const fkMap = FK_PARENTS[model]
+  if (!fkMap) return { ok: rows, skipped: [] }
+
+  const ok: Record<string, unknown>[] = []
+  const skipped: Record<string, unknown>[] = []
+  for (const row of rows) {
+    const blocked = Object.entries(fkMap).some(([field, parentModel]) => {
+      const value = row[field]
+      return value != null && skippedIds.get(parentModel)?.has(value)
+    })
+    ;(blocked ? skipped : ok).push(row)
+  }
+  return { ok, skipped }
+}
+
 export async function exportBackup(prisma: PrismaClient) {
   const data: BackupData = {}
   for (const model of BACKUP_MODELS) {
@@ -145,6 +195,7 @@ export async function importBackup(prisma: PrismaClient, data: BackupData) {
 // out in JS instead.
 export async function mergeBackup(prisma: PrismaClient, data: BackupData) {
   const counts: Partial<Record<BackupModel, number>> = {}
+  const skippedIds = new Map<BackupModel, Set<unknown>>()
 
   await prisma.$transaction(
     async (tx) => {
@@ -161,8 +212,13 @@ export async function mergeBackup(prisma: PrismaClient, data: BackupData) {
         const notExisting = rows.filter((r) => !existingIds.has(r.id))
         if (notExisting.length === 0) continue
 
-        const conflicts = await findAlternateKeyConflicts(tx, model, notExisting)
-        const toInsert = notExisting.filter((r) => !conflicts.has(r.id))
+        const { ok, skipped: cascaded } = splitCascadeSkipped(model, notExisting, skippedIds)
+        const conflicts = await findAlternateKeyConflicts(tx, model, ok)
+        const toInsert = ok.filter((r) => !conflicts.has(r.id))
+
+        const skippedThisModel = new Set<unknown>([...conflicts, ...cascaded.map((r) => r.id)])
+        if (skippedThisModel.size > 0) skippedIds.set(model, skippedThisModel)
+
         if (toInsert.length === 0) continue
 
         if (model === 'category') {
@@ -198,6 +254,7 @@ export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
   const counts: Partial<
     Record<BackupModel, { inserted: number; updated: number; skipped: number }>
   > = {}
+  const skippedIds = new Map<BackupModel, Set<unknown>>()
 
   await prisma.$transaction(
     async (tx) => {
@@ -214,8 +271,12 @@ export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
         const notExisting = rows.filter((r) => !existingIds.has(r.id))
         const toUpdate = rows.filter((r) => existingIds.has(r.id))
 
-        const conflicts = await findAlternateKeyConflicts(tx, model, notExisting)
-        const toInsert = notExisting.filter((r) => !conflicts.has(r.id))
+        const { ok, skipped: cascaded } = splitCascadeSkipped(model, notExisting, skippedIds)
+        const conflicts = await findAlternateKeyConflicts(tx, model, ok)
+        const toInsert = ok.filter((r) => !conflicts.has(r.id))
+
+        const skippedThisModel = new Set<unknown>([...conflicts, ...cascaded.map((r) => r.id)])
+        if (skippedThisModel.size > 0) skippedIds.set(model, skippedThisModel)
 
         if (toInsert.length > 0) {
           if (model === 'category') {
@@ -239,11 +300,11 @@ export async function upsertBackup(prisma: PrismaClient, data: BackupData) {
           await delegate(tx, model).update({ where: { id }, data: fields })
         }
 
-        if (toInsert.length > 0 || toUpdate.length > 0 || conflicts.size > 0) {
+        if (toInsert.length > 0 || toUpdate.length > 0 || skippedThisModel.size > 0) {
           counts[model] = {
             inserted: toInsert.length,
             updated: toUpdate.length,
-            skipped: conflicts.size,
+            skipped: skippedThisModel.size,
           }
         }
       }

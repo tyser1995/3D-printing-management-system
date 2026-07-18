@@ -1,10 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Edit2, Trash2 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Pagination from '@/components/ui/Pagination'
+import CustomerFormModal, {
+  type CustomerFormData,
+} from '@/components/admin/customers/CustomerFormModal'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import { usePagination } from '@/lib/hooks/usePagination'
 
@@ -12,6 +15,7 @@ interface CustomerRow {
   id: string
   name: string | null
   email: string
+  phone: string | null
   orderCount: number
   totalSpent: number
   lastOrder: string | Date | null
@@ -22,8 +26,11 @@ interface Props {
   customers: CustomerRow[]
 }
 
-export default function CustomersClient({ customers }: Props) {
+export default function CustomersClient({ customers: initialCustomers }: Props) {
+  const [customers, setCustomers] = useState(initialCustomers)
   const [query, setQuery] = useState('')
+  const [editTarget, setEditTarget] = useState<CustomerRow | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const filtered = customers.filter((c) => {
     const q = query.toLowerCase()
@@ -35,6 +42,37 @@ export default function CustomersClient({ customers }: Props) {
   const handleQueryChange = (value: string) => {
     setQuery(value)
     resetPage()
+  }
+
+  const handleEdit = async (data: CustomerFormData) => {
+    if (!editTarget) return
+    const res = await fetch(`/api/admin/customers/${editTarget.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error ?? 'Failed to save')
+    setCustomers((prev) =>
+      prev.map((c) =>
+        c.id === editTarget.id
+          ? { ...c, name: data.name || null, email: data.email, phone: data.phone || null }
+          : c
+      )
+    )
+    setEditTarget(null)
+  }
+
+  const handleDelete = async (customer: CustomerRow) => {
+    if (!confirm(`Delete customer "${customer.name ?? customer.email}"?`)) return
+    setError(null)
+    const res = await fetch(`/api/admin/customers/${customer.id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const json = await res.json()
+      setError(json.error ?? 'Failed to delete customer')
+      return
+    }
+    setCustomers((prev) => prev.filter((c) => c.id !== customer.id))
   }
 
   return (
@@ -53,12 +91,22 @@ export default function CustomersClient({ customers }: Props) {
         </div>
       </div>
 
+      {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+
       <Card padding="none">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                {['Customer', 'Email', 'Orders', 'Total Spent', 'Last Order', 'Status'].map((h) => (
+                {[
+                  'Customer',
+                  'Email',
+                  'Orders',
+                  'Total Spent',
+                  'Last Order',
+                  'Status',
+                  'Actions',
+                ].map((h) => (
                   <th
                     key={h}
                     className="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
@@ -106,11 +154,29 @@ export default function CustomersClient({ customers }: Props) {
                       {customer.status}
                     </Badge>
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditTarget(customer)}
+                        className="rounded p-1.5 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(customer)}
+                        className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
                     {query ? 'No customers match your search.' : 'No customers yet.'}
                   </td>
                 </tr>
@@ -126,6 +192,18 @@ export default function CustomersClient({ customers }: Props) {
           onPageChange={setPage}
         />
       </Card>
+
+      {editTarget && (
+        <CustomerFormModal
+          initial={{
+            name: editTarget.name ?? '',
+            email: editTarget.email,
+            phone: editTarget.phone ?? '',
+          }}
+          onSubmit={handleEdit}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
     </>
   )
 }

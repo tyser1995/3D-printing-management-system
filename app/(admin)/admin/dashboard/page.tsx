@@ -1,6 +1,14 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, TrendingUp, Package, Users, Printer, AlertTriangle } from 'lucide-react'
+import {
+  ShoppingBag,
+  TrendingUp,
+  Package,
+  Users,
+  Printer,
+  AlertTriangle,
+  Truck,
+} from 'lucide-react'
 import AdminHeader from '@/components/layout/AdminHeader'
 import StatsCard from '@/components/admin/StatsCard'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
@@ -42,6 +50,9 @@ export default async function AdminDashboardPage() {
     activePrintJobs,
     lowStockFilaments,
     chartOrders,
+    purchasesDeliveredAgg,
+    lastMonthPurchasesDelivered,
+    recentDeliveries,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: { status: { notIn: ['CANCELLED', 'RETURNED'] } },
@@ -96,6 +107,20 @@ export default async function AdminDashboardPage() {
       },
       select: { total: true, createdAt: true },
     }),
+    prisma.purchase.aggregate({
+      where: { status: 'RECEIVED' },
+      _count: true,
+      _sum: { totalCost: true },
+    }),
+    prisma.purchase.count({
+      where: { status: 'RECEIVED', receivedAt: { gte: lastMonthStart, lt: monthStart } },
+    }),
+    prisma.purchase.findMany({
+      where: { status: 'RECEIVED' },
+      include: { supplier: { select: { name: true } } },
+      orderBy: { receivedAt: 'desc' },
+      take: 5,
+    }),
   ])
 
   const chartData = Array.from({ length: 7 }, (_, i) => {
@@ -114,6 +139,9 @@ export default async function AdminDashboardPage() {
   const thisMonthRevenue = Number(totalRevenue._sum.total ?? 0)
   const prevRevenue = Number(lastMonthRevenue._sum.total ?? 0)
   const revenueChange = prevRevenue > 0 ? ((thisMonthRevenue - prevRevenue) / prevRevenue) * 100 : 0
+
+  const purchasesDelivered = purchasesDeliveredAgg._count
+  const purchasesDeliveredTotal = Number(purchasesDeliveredAgg._sum.totalCost ?? 0)
 
   const stats = [
     {
@@ -152,6 +180,15 @@ export default async function AdminDashboardPage() {
       iconColor: 'text-purple-500',
       iconBg: 'bg-purple-50',
     },
+    {
+      title: 'Purchase Orders Delivered',
+      value: String(purchasesDelivered),
+      change: `${formatCurrency(purchasesDeliveredTotal)} total (${lastMonthPurchasesDelivered} last month)`,
+      changeType: 'neutral' as const,
+      icon: Truck,
+      iconColor: 'text-teal-500',
+      iconBg: 'bg-teal-50',
+    },
   ]
 
   return (
@@ -160,7 +197,7 @@ export default async function AdminDashboardPage() {
 
       <div className="flex-1 overflow-y-auto p-6">
         {/* Stats */}
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((stat) => (
             <StatsCard key={stat.title} {...stat} />
           ))}
@@ -334,6 +371,71 @@ export default async function AdminDashboardPage() {
                 </Link>
               </div>
             )}
+          </Card>
+        </div>
+
+        {/* Recent Purchase Deliveries */}
+        <div className="mt-6">
+          <Card padding="none">
+            <CardHeader className="px-6 pt-6">
+              <CardTitle>Recent Purchase Deliveries</CardTitle>
+              <Link
+                href="/admin/purchases"
+                className="text-sm font-medium text-orange-500 hover:text-orange-600"
+              >
+                View all →
+              </Link>
+            </CardHeader>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    {['Item', 'Supplier', 'Qty', 'Total', 'Delivered'].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentDeliveries.map((purchase) => (
+                    <tr key={purchase.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        {purchase.itemName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {purchase.supplier?.name ?? '—'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {purchase.quantity} {purchase.unit}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        {formatCurrency(Number(purchase.totalCost))}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-500">
+                        {purchase.receivedAt
+                          ? formatDate(String(purchase.receivedAt), {
+                              month: 'short',
+                              day: 'numeric',
+                              year: undefined,
+                            })
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                  {recentDeliveries.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
+                        No purchase orders delivered yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
       </div>

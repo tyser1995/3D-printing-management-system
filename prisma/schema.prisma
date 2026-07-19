@@ -414,9 +414,10 @@ model Filament {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  material  FilamentMaterial @relation(fields: [materialId], references: [id])
-  supplier  Supplier?        @relation(fields: [supplierId], references: [id])
-  movements StockMovement[]
+  material       FilamentMaterial @relation(fields: [materialId], references: [id])
+  supplier       Supplier?        @relation(fields: [supplierId], references: [id])
+  movements      StockMovement[]
+  productionLogs ProductionLog[]
 
   @@map("filaments")
 }
@@ -434,6 +435,60 @@ model StockMovement {
   filament Filament @relation(fields: [filamentId], references: [id], onDelete: Cascade)
 
   @@map("stock_movements")
+}
+
+// ─── PRODUCTION LOG ────────────────────────────────────────────────────────────
+
+model ProductionBase {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  types ProductionType[]
+
+  @@map("production_bases")
+}
+
+model ProductionType {
+  id        String   @id @default(cuid())
+  baseId    String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  base ProductionBase @relation(fields: [baseId], references: [id], onDelete: Cascade)
+
+  @@unique([baseId, name])
+  @@map("production_types")
+}
+
+model ProductionColor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  colorHex  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("production_colors")
+}
+
+model ProductionLog {
+  id         String   @id @default(cuid())
+  product    String
+  type       String?
+  item       String?
+  filamentId String?
+  quantity   Int
+  producedAt DateTime @default(now())
+  notes      String?
+  producedBy String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  filament Filament? @relation(fields: [filamentId], references: [id], onDelete: SetNull)
+
+  @@map("production_logs")
 }
 
 // ─── REVIEWS ──────────────────────────────────────────────────────────────────

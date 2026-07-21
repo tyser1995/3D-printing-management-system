@@ -54,3 +54,6 @@ prisma/*.db-shm
 
 # locally-uploaded product images (no cloud storage configured)
 /public/uploads/
+
+# auto-start dev server logs
+/logs/

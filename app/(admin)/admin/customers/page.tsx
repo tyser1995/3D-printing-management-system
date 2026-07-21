@@ -44,7 +44,16 @@ export default async function AdminCustomersPage() {
         : nowMs - (c.createdAt?.getTime() ?? 0) < 30 * 24 * 60 * 60 * 1000
           ? 'New'
           : 'Active'
-    return { id: c.id, name: c.name, email: c.email, orderCount, totalSpent, lastOrder, status }
+    return {
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      orderCount,
+      totalSpent,
+      lastOrder,
+      status,
+    }
   })
 
   return (

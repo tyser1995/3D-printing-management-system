@@ -13,7 +13,7 @@ export default async function AdminReportsPage() {
 
   // "Ordered" = every non-cancelled/non-returned order item, all-time.
   // "Delivered" = the subset of those whose order has actually reached DELIVERED.
-  const [thisMonthOrders, lastMonthOrders, topProducts, orderedAgg, deliveredAgg] =
+  const [thisMonthOrders, lastMonthOrders, topProducts, orderedAgg, deliveredAgg, purchaseAgg] =
     await Promise.all([
       prisma.order.findMany({
         where: {
@@ -49,6 +49,10 @@ export default async function AdminReportsPage() {
       prisma.orderItem.aggregate({
         where: { order: { status: 'DELIVERED' } },
         _sum: { quantity: true, totalPrice: true },
+      }),
+      prisma.purchase.aggregate({
+        where: { status: { not: 'CANCELLED' } },
+        _sum: { totalCost: true },
       }),
     ])
 
@@ -99,6 +103,14 @@ export default async function AdminReportsPage() {
   // deducted from item revenue rather than charged on top.
   const electricityFund = deliveredItems * ORDER_ELECTRICITY_FEE_PER_UNIT
 
+  // Rough all-time margin: revenue actually collected from delivered orders
+  // minus everything spent restocking materials (cancelled purchases excluded).
+  const totalPurchased = Number(purchaseAgg._sum.totalCost ?? 0)
+  const netAfterPurchases = deliveredRevenue - totalPurchased
+  // Bottom line: what's actually left after the electricity fund is set aside
+  // and material purchases are paid for.
+  const takeHomeAmount = deliveredRevenue - (electricityFund + totalPurchased)
+
   const fulfillment = {
     orderedRevenue,
     deliveredRevenue,
@@ -106,6 +118,9 @@ export default async function AdminReportsPage() {
     deliveredItems,
     deliveredPct: orderedRevenue > 0 ? (deliveredRevenue / orderedRevenue) * 100 : 0,
     electricityFund,
+    totalPurchased,
+    netAfterPurchases,
+    takeHomeAmount,
   }
 
   return (

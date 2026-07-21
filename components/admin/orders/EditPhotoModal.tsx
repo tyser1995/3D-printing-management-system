@@ -76,7 +76,6 @@ export default function EditPhotoModal({ orderId, initialPhotoUrl, onClose, onSa
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Photo URL"
-            type="url"
             value={photoUrl}
             onChange={(e) => setPhotoUrl(e.target.value)}
             placeholder="Paste an image URL..."

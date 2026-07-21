@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
 import PageTracker from '@/components/layout/PageTracker'
+import { Analytics } from '@vercel/analytics/next'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PageTracker />
           {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
   )

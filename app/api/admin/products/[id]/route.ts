@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma/client'
 import { slugify } from '@/lib/utils/format'
 import type { NextRequest } from 'next/server'
-
-export const dynamic = 'force-dynamic'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -53,6 +52,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       })
     }
 
+    revalidateTag('products', { expire: 0 })
     return NextResponse.json({ data: product })
   } catch (error) {
     console.error('[PATCH /api/admin/products/[id]]', error)
@@ -64,6 +64,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
     await prisma.product.update({ where: { id }, data: { isActive: false } })
+    revalidateTag('products', { expire: 0 })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/admin/products/[id]]', error)

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import { createClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
 import { generateOrderNumber } from '@/lib/utils/format'
 import { calculateOrderElectricityFee } from '@/lib/utils/cost'
 import type { NextRequest } from 'next/server'
@@ -53,6 +52,7 @@ export async function POST(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where: { id: { in: items.map((i: { productId: string }) => i.productId) } },
+      select: { id: true, salePrice: true, basePrice: true },
     })
 
     const subtotal = items.reduce((sum: number, item: { productId: string; quantity: number }) => {

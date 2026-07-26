@@ -24,6 +24,11 @@ export interface AppSettings {
     provider?: 'local' | 'supabase'
     supabaseBucket?: string
   }
+  roi?: {
+    investmentAmount?: number
+    targetMonths?: number
+    startDate?: string
+  }
 }
 
 export async function getSettings(): Promise<AppSettings> {

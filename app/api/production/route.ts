@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 import type { Prisma } from '@/app/generated/prisma'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -45,7 +43,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { product, type, item, filamentId, quantity, producedAt, notes, producedBy } = body
+    const { product, type, item, filamentId, quantity, amount, producedAt, notes, producedBy } =
+      body
 
     if (!product || !quantity) {
       return NextResponse.json({ error: 'product and quantity are required' }, { status: 400 })
@@ -56,6 +55,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'quantity must be a positive number' }, { status: 400 })
     }
 
+    const amountNum = amount !== undefined && amount !== '' ? Number(amount) : 0
+    if (isNaN(amountNum) || amountNum < 0) {
+      return NextResponse.json({ error: 'amount must be a non-negative number' }, { status: 400 })
+    }
+
     const log = await prisma.productionLog.create({
       data: {
         product,
@@ -63,6 +67,7 @@ export async function POST(request: NextRequest) {
         item: item || null,
         filamentId: filamentId || null,
         quantity: quantityNum,
+        amount: amountNum,
         producedAt: producedAt ? new Date(producedAt) : new Date(),
         notes: notes || null,
         producedBy: producedBy || null,

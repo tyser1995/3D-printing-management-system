@@ -5,6 +5,7 @@ import { Download } from 'lucide-react'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils/format'
+import ROITracker from './ROITracker'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -43,16 +44,61 @@ interface Fulfillment {
   takeHomeAmount: number
 }
 
+interface RoiSettings {
+  investmentAmount?: number
+  targetMonths?: number
+  startDate?: string
+}
+
 interface Props {
   chartData: ChartPoint[]
   topProducts: TopProduct[]
   kpis: Kpis
   fulfillment: Fulfillment
+  roi: RoiSettings
 }
 
-export default function ReportsClient({ chartData, topProducts, kpis, fulfillment }: Props) {
+export default function ReportsClient({
+  chartData: initialChartData,
+  topProducts: initialTopProducts,
+  kpis: initialKpis,
+  fulfillment,
+  roi,
+}: Props) {
   const [period, setPeriod] = useState<'month' | 'year'>('month')
+  const [chartData, setChartData] = useState(initialChartData)
+  const [topProducts, setTopProducts] = useState(initialTopProducts)
+  const [kpis, setKpis] = useState(initialKpis)
+  const [loadingPeriod, setLoadingPeriod] = useState(false)
   const [exporting, setExporting] = useState(false)
+
+  const changePeriod = async (p: 'month' | 'year') => {
+    if (p === period) return
+    setPeriod(p)
+
+    if (p === 'month') {
+      setChartData(initialChartData)
+      setTopProducts(initialTopProducts)
+      setKpis(initialKpis)
+      return
+    }
+
+    setLoadingPeriod(true)
+    try {
+      const res = await fetch(`/api/reports/sales?period=${p}`)
+      const { data } = await res.json()
+      setChartData(data.chartData)
+      setTopProducts(data.topProducts)
+      setKpis({
+        revenue: data.summary.revenue,
+        orders: data.summary.orders,
+        avgOrder: data.summary.avgOrder,
+        revenueChange: 0,
+      })
+    } finally {
+      setLoadingPeriod(false)
+    }
+  }
 
   const exportCSV = async () => {
     setExporting(true)
@@ -84,8 +130,9 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
           {(['month', 'year'] as const).map((p) => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              onClick={() => changePeriod(p)}
+              disabled={loadingPeriod}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
                 period === p
                   ? 'bg-orange-500 text-white'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -109,7 +156,10 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
           {
             label: 'Revenue',
             value: formatCurrency(kpis.revenue),
-            change: `${kpis.revenueChange >= 0 ? '+' : ''}${kpis.revenueChange.toFixed(1)}%`,
+            change:
+              period === 'month'
+                ? `${kpis.revenueChange >= 0 ? '+' : ''}${kpis.revenueChange.toFixed(1)}%`
+                : null,
             up: kpis.revenueChange >= 0,
           },
           { label: 'Orders', value: String(kpis.orders), change: null, up: true },
@@ -286,6 +336,8 @@ export default function ReportsClient({ chartData, topProducts, kpis, fulfillmen
           {formatCurrency(fulfillment.totalPurchased)} material purchases).
         </p>
       </Card>
+
+      <ROITracker roi={roi} takeHomeAmount={fulfillment.takeHomeAmount} />
     </div>
   )
 }

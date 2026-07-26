@@ -18,6 +18,7 @@ export interface BulkRow {
   item: string
   filamentId: string
   quantity: string
+  amount: string
 }
 
 export interface BulkProductionLogFormData {
@@ -41,6 +42,7 @@ const emptyRow = (): BulkRow => ({
   item: '',
   filamentId: '',
   quantity: '1',
+  amount: '0',
 })
 
 export default function BulkProductionLogForm({ filaments, onSubmit, onCancel }: Props) {
@@ -91,7 +93,7 @@ export default function BulkProductionLogForm({ filaments, onSubmit, onCancel }:
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
-              {['Product *', 'Type', 'Item', 'Color', 'Qty *', ''].map((h) => (
+              {['Product *', 'Type', 'Item', 'Color', 'Qty *', 'Amount', ''].map((h) => (
                 <th
                   key={h}
                   className="px-3 py-2 text-left text-xs font-medium tracking-wide text-slate-500 uppercase"
@@ -170,6 +172,18 @@ export default function BulkProductionLogForm({ filaments, onSubmit, onCancel }:
                     value={row.quantity}
                     onChange={(e) => updateRow(i, 'quantity', e.target.value)}
                     required
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:ring-1 focus:ring-[#6EC30B] focus:outline-none"
+                  />
+                </td>
+                {/* Amount */}
+                <td className="w-[90px] px-2 py-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row.amount}
+                    onChange={(e) => updateRow(i, 'amount', e.target.value)}
+                    placeholder="0.00"
                     className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:ring-1 focus:ring-[#6EC30B] focus:outline-none"
                   />
                 </td>

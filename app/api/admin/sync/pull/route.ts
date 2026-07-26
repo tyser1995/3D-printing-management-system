@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma/client'
 import { getSupabaseSyncClient } from '@/lib/prisma/supabaseSync'
 import { syncBackup } from '@/lib/prisma/backup'
 
-export const dynamic = 'force-dynamic'
-
 // Overwrites local (or whatever DATABASE_URL points to) data with what's on Supabase.
 export async function POST() {
   try {

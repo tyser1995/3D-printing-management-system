@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 type Params = { params: Promise<{ id: string }> }
 
 // Admin-only (called from the admin order detail page) — no Supabase auth gate,

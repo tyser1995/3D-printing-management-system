@@ -4,8 +4,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import { mergeBackup, removeBackup, upsertBackup, type BackupData } from '@/lib/prisma/backup'
 
-export const dynamic = 'force-dynamic'
-
 async function loadSampleData(): Promise<{ meta: unknown; data: BackupData }> {
   const raw = await readFile(join(process.cwd(), 'data', 'sample-data.json'), 'utf-8')
   return JSON.parse(raw)

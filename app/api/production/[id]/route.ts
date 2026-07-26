@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 type Params = { params: Promise<{ id: string }> }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params
     const body = await request.json()
-    const { product, type, item, filamentId, quantity, producedAt, notes, producedBy } = body
+    const { product, type, item, filamentId, quantity, amount, producedAt, notes, producedBy } =
+      body
 
     const log = await prisma.productionLog.update({
       where: { id },
@@ -20,6 +19,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ...(item !== undefined && { item: item || null }),
         ...(filamentId !== undefined && { filamentId: filamentId || null }),
         ...(quantity !== undefined && { quantity: Number(quantity) }),
+        ...(amount !== undefined && { amount: Number(amount) || 0 }),
         ...(producedAt !== undefined && { producedAt: new Date(producedAt) }),
         ...(notes !== undefined && { notes: notes || null }),
         ...(producedBy !== undefined && { producedBy: producedBy || null }),

@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma/client'
 import ProductCard from '@/components/products/ProductCard'
 import SortSelect from './SortSelect'
+import { getActiveCategories, getPublicProducts } from '@/lib/data/products'
 
-export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Products | Kai3D' }
 
 type Props = {
@@ -14,29 +13,8 @@ export default async function ProductsPage({ searchParams }: Props) {
   const { category, sort = 'newest', q } = await searchParams
 
   const [categories, products] = await Promise.all([
-    prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
-    prisma.product.findMany({
-      where: {
-        isActive: true,
-        ...(category && { category: { slug: category } }),
-        ...(q && {
-          OR: [{ name: { contains: q } }, { description: { contains: q } }],
-        }),
-      },
-      include: {
-        category: { select: { name: true } },
-        images: { where: { isPrimary: true }, take: 1 },
-        reviews: { select: { rating: true } },
-      },
-      orderBy:
-        sort === 'price-asc'
-          ? { basePrice: 'asc' }
-          : sort === 'price-desc'
-            ? { basePrice: 'desc' }
-            : sort === 'featured'
-              ? { isFeatured: 'desc' }
-              : { createdAt: 'desc' },
-    }),
+    getActiveCategories(),
+    getPublicProducts(category, sort, q),
   ])
 
   // eslint-disable-next-line react-hooks/purity
@@ -52,7 +30,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     rating:
       p.reviews.length > 0 ? p.reviews.reduce((s, r) => s + r.rating, 0) / p.reviews.length : 0,
     reviewCount: p.reviews.length,
-    isNew: now - p.createdAt.getTime() < 7 * 24 * 60 * 60 * 1000,
+    isNew: now - new Date(p.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000,
     isFeatured: p.isFeatured,
   }))
 

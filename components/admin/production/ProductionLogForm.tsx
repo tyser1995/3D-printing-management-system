@@ -17,6 +17,7 @@ export interface ProductionLogFormData {
   item: string
   filamentId: string
   quantity: string
+  amount: string
   producedAt: string
   producedBy: string
   notes: string
@@ -47,6 +48,7 @@ export default function ProductionLogForm({
     item: initialData?.item ?? '',
     filamentId: initialData?.filamentId ?? '',
     quantity: initialData?.quantity ?? '1',
+    amount: initialData?.amount ?? '0',
     producedAt: initialData?.producedAt ?? today(),
     producedBy: initialData?.producedBy ?? '',
     notes: initialData?.notes ?? '',
@@ -126,19 +128,30 @@ export default function ProductionLogForm({
           required
         />
         <Input
+          label="Amount (per unit)"
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.amount}
+          onChange={set('amount')}
+          placeholder="0.00"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
           label="Date Produced"
           type="date"
           value={form.producedAt}
           onChange={set('producedAt')}
         />
+        <Input
+          label="Produced By"
+          value={form.producedBy}
+          onChange={set('producedBy')}
+          placeholder="Optional"
+        />
       </div>
-
-      <Input
-        label="Produced By"
-        value={form.producedBy}
-        onChange={set('producedBy')}
-        placeholder="Optional"
-      />
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-slate-700">Notes</label>

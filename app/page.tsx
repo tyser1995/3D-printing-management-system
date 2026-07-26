@@ -9,7 +9,7 @@ import HowItWorksSection from '@/components/landing/HowItWorksSection'
 import CTASection from '@/components/landing/CTASection'
 import { getSettings } from '@/lib/settings'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function HomePage() {
   const settings = await getSettings()

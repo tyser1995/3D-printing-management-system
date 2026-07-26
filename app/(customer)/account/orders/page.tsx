@@ -6,7 +6,6 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
 export const metadata = { title: 'My Orders' }
 
 const STATUS_COLORS: Record<string, 'success' | 'warning' | 'info' | 'danger' | 'default'> = {

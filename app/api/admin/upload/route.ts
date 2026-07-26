@@ -6,8 +6,6 @@ import { getSettings } from '@/lib/settings'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_FOLDERS = ['products', 'orders'] as const

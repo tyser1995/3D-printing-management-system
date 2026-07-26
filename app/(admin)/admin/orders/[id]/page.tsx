@@ -5,8 +5,6 @@ import AdminHeader from '@/components/layout/AdminHeader'
 import { prisma } from '@/lib/prisma/client'
 import OrderDetail from '@/components/admin/orders/OrderDetail'
 
-export const dynamic = 'force-dynamic'
-
 type Props = { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: Props) {

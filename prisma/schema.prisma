@@ -95,6 +95,7 @@ model Address {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]
 
+  @@index([userId])
   @@map("addresses")
 }
 
@@ -144,6 +145,7 @@ model Product {
   cartItems  CartItem[]
   costConfig CostConfig?
 
+  @@index([categoryId])
   @@map("products")
 }
 
@@ -238,6 +240,9 @@ model Order {
   printJobs  PrintJob[]
   statusLogs OrderStatusLog[]
 
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 
@@ -252,6 +257,8 @@ model OrderItem {
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
+  @@index([orderId])
+  @@index([productId])
   @@map("order_items")
 }
 
@@ -265,6 +272,7 @@ model OrderStatusLog {
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
+  @@index([orderId])
   @@map("order_status_logs")
 }
 
@@ -332,6 +340,9 @@ model PrintJob {
   order   Order    @relation(fields: [orderId], references: [id])
   printer Printer? @relation(fields: [printerId], references: [id])
 
+  @@index([orderId])
+  @@index([printerId])
+  @@index([status])
   @@map("print_jobs")
 }
 
@@ -344,6 +355,7 @@ model MaintenanceLog {
 
   printer Printer @relation(fields: [printerId], references: [id], onDelete: Cascade)
 
+  @@index([printerId])
   @@map("maintenance_logs")
 }
 
@@ -385,6 +397,8 @@ model Purchase {
 
   supplier Supplier? @relation(fields: [supplierId], references: [id])
 
+  @@index([supplierId])
+  @@index([status])
   @@map("purchases")
 }
 
@@ -414,10 +428,11 @@ model Filament {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  material       FilamentMaterial @relation(fields: [materialId], references: [id])
-  supplier       Supplier?        @relation(fields: [supplierId], references: [id])
-  movements      StockMovement[]
-  productionLogs ProductionLog[]
+  material            FilamentMaterial     @relation(fields: [materialId], references: [id])
+  supplier            Supplier?            @relation(fields: [supplierId], references: [id])
+  movements           StockMovement[]
+  productionLogs      ProductionLog[]
+  productionCheckouts ProductionCheckout[]
 
   @@map("filaments")
 }
@@ -434,6 +449,8 @@ model StockMovement {
 
   filament Filament @relation(fields: [filamentId], references: [id], onDelete: Cascade)
 
+  @@index([filamentId])
+  @@index([createdAt])
   @@map("stock_movements")
 }
 
@@ -480,15 +497,46 @@ model ProductionLog {
   item       String?
   filamentId String?
   quantity   Int
+  amount     Decimal  @default(0)
   producedAt DateTime @default(now())
   notes      String?
   producedBy String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  filament Filament? @relation(fields: [filamentId], references: [id], onDelete: SetNull)
+  filament  Filament?            @relation(fields: [filamentId], references: [id], onDelete: SetNull)
+  checkouts ProductionCheckout[]
 
+  @@index([filamentId])
+  @@index([producedAt])
   @@map("production_logs")
+}
+
+// ─── PRODUCTION CHECKOUT ────────────────────────────────────────────────────────
+
+model ProductionCheckout {
+  id              String   @id @default(cuid())
+  product         String
+  type            String?
+  item            String?
+  filamentId      String?
+  productionLogId String?
+  quantity        Int
+  unitPrice       Decimal
+  totalAmount     Decimal
+  checkedOutAt    DateTime @default(now())
+  checkedOutBy    String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  filament      Filament?      @relation(fields: [filamentId], references: [id], onDelete: SetNull)
+  productionLog ProductionLog? @relation(fields: [productionLogId], references: [id], onDelete: SetNull)
+
+  @@index([filamentId])
+  @@index([productionLogId])
+  @@index([checkedOutAt])
+  @@map("production_checkouts")
 }
 
 // ─── REVIEWS ──────────────────────────────────────────────────────────────────

@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma/client'
 import { slugify } from '@/lib/utils/format'
 import type { NextRequest } from 'next/server'
-
-export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
@@ -32,6 +31,7 @@ export async function POST(request: NextRequest) {
         sortOrder: sortOrder ?? 0,
       },
     })
+    revalidateTag('categories', { expire: 0 })
     return NextResponse.json({ data: category }, { status: 201 })
   } catch (error) {
     console.error('[POST /api/admin/categories]', error)

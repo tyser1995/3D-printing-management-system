@@ -3,8 +3,6 @@ import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 const SETTINGS_PATH = join(process.cwd(), 'data', 'settings.json')
 
 async function readSettings() {

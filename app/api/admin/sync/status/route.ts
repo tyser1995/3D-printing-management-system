@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isSupabaseSyncConfigured, getSupabaseSyncClient } from '@/lib/prisma/supabaseSync'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET() {
   if (!isSupabaseSyncConfigured()) {
     return NextResponse.json({ data: { configured: false, connected: false } })

@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 interface BulkEntry {
   product: string
   type?: string
   item?: string
   filamentId?: string
   quantity: number
+  amount?: number
   producedAt?: string
   producedBy?: string
   notes?: string
@@ -45,6 +44,7 @@ export async function POST(request: NextRequest) {
             item: e.item?.trim() || null,
             filamentId: e.filamentId || null,
             quantity: Number(e.quantity),
+            amount: e.amount !== undefined && e.amount !== null ? Number(e.amount) || 0 : 0,
             producedAt: e.producedAt ? new Date(e.producedAt) : new Date(),
             producedBy: e.producedBy?.trim() || null,
             notes: e.notes?.trim() || null,

@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 import type { PurchaseStatus } from '@/app/generated/prisma'
 
-export const dynamic = 'force-dynamic'
-
 interface PurchaseInput {
   itemName: string
   category: string

@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -18,7 +16,7 @@ export async function GET(request: NextRequest) {
       since = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    const [orders, topProducts] = await Promise.all([
+    const [orders, checkouts, topProducts] = await Promise.all([
       prisma.order.findMany({
         where: {
           createdAt: { gte: since },
@@ -30,6 +28,10 @@ export async function GET(request: NextRequest) {
           _count: { select: { items: true } },
         },
         orderBy: { createdAt: 'asc' },
+      }),
+      prisma.productionCheckout.findMany({
+        where: { checkedOutAt: { gte: since } },
+        select: { totalAmount: true, checkedOutAt: true },
       }),
       prisma.orderItem.groupBy({
         by: ['productId'],
@@ -45,17 +47,26 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    // Group orders by day or month
-    const grouped = orders.reduce<Record<string, { revenue: number; count: number }>>((acc, o) => {
+    // Group orders and production checkouts by day or month
+    const grouped: Record<string, { revenue: number; count: number }> = {}
+    for (const o of orders) {
       const key =
         period === 'year'
           ? o.createdAt.toLocaleString('en-US', { month: 'short' })
           : String(o.createdAt.getDate())
-      if (!acc[key]) acc[key] = { revenue: 0, count: 0 }
-      acc[key].revenue += Number(o.total)
-      acc[key].count += 1
-      return acc
-    }, {})
+      if (!grouped[key]) grouped[key] = { revenue: 0, count: 0 }
+      grouped[key].revenue += Number(o.total)
+      grouped[key].count += 1
+    }
+    for (const c of checkouts) {
+      const key =
+        period === 'year'
+          ? c.checkedOutAt.toLocaleString('en-US', { month: 'short' })
+          : String(c.checkedOutAt.getDate())
+      if (!grouped[key]) grouped[key] = { revenue: 0, count: 0 }
+      grouped[key].revenue += Number(c.totalAmount)
+      grouped[key].count += 1
+    }
 
     const chartData = Object.entries(grouped).map(([name, d]) => ({
       name,
@@ -77,9 +88,11 @@ export async function GET(request: NextRequest) {
       revenue: Number(p._sum.totalPrice ?? 0),
     }))
 
-    // Summary KPIs
-    const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0)
-    const totalOrders = orders.length
+    // Summary KPIs — a production checkout is a completed sale, counted the same as an order
+    const orderRevenue = orders.reduce((s, o) => s + Number(o.total), 0)
+    const checkoutRevenue = checkouts.reduce((s, c) => s + Number(c.totalAmount), 0)
+    const totalRevenue = orderRevenue + checkoutRevenue
+    const totalOrders = orders.length + checkouts.length
     const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
     return NextResponse.json({

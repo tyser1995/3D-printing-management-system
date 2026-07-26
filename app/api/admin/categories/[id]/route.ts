@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma/client'
 import { slugify } from '@/lib/utils/format'
 import type { NextRequest } from 'next/server'
-
-export const dynamic = 'force-dynamic'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,6 +21,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ...(isActive !== undefined && { isActive }),
       },
     })
+    revalidateTag('categories', { expire: 0 })
     return NextResponse.json({ data: category })
   } catch (error) {
     console.error('[PATCH /api/admin/categories/[id]]', error)
@@ -40,6 +40,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       )
     }
     await prisma.category.delete({ where: { id } })
+    revalidateTag('categories', { expire: 0 })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/admin/categories/[id]]', error)

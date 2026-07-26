@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Printer, Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
 import { FaFacebook, FaInstagram } from 'react-icons/fa'
 import Image from 'next/image'
 

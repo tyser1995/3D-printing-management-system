@@ -8,8 +8,6 @@ interface OrderItemInput {
   quantity: number
 }
 
-export const dynamic = 'force-dynamic'
-
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {

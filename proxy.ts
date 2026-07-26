@@ -49,6 +49,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Only routes that actually gate on auth need the round trip to Supabase — public
+  // pages (products, cart, etc.) skip it entirely to avoid a network call per request.
+  if (!isAdminRoute && !isAccountRoute && !isAuthRoute) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {

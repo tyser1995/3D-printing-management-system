@@ -2,6 +2,7 @@ import AdminHeader from '@/components/layout/AdminHeader'
 import ReportsClient from './ReportsClient'
 import { prisma } from '@/lib/prisma/client'
 import { ORDER_ELECTRICITY_FEE_PER_UNIT } from '@/lib/utils/cost'
+import { getSettings } from '@/lib/settings'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Reports | Admin' }
@@ -13,48 +14,68 @@ export default async function AdminReportsPage() {
 
   // "Ordered" = every non-cancelled/non-returned order item, all-time.
   // "Delivered" = the subset of those whose order has actually reached DELIVERED.
-  const [thisMonthOrders, lastMonthOrders, topProducts, orderedAgg, deliveredAgg, purchaseAgg] =
-    await Promise.all([
-      prisma.order.findMany({
-        where: {
+  const [
+    thisMonthOrders,
+    lastMonthOrders,
+    thisMonthCheckouts,
+    lastMonthCheckouts,
+    topProducts,
+    orderedAgg,
+    deliveredAgg,
+    checkoutAgg,
+    purchaseAgg,
+    settings,
+  ] = await Promise.all([
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: monthStart },
+        status: { notIn: ['CANCELLED', 'RETURNED'] },
+      },
+      select: { total: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: lastMonthStart, lt: monthStart },
+        status: { notIn: ['CANCELLED', 'RETURNED'] },
+      },
+      select: { total: true },
+    }),
+    prisma.productionCheckout.findMany({
+      where: { checkedOutAt: { gte: monthStart } },
+      select: { totalAmount: true, checkedOutAt: true },
+    }),
+    prisma.productionCheckout.findMany({
+      where: { checkedOutAt: { gte: lastMonthStart, lt: monthStart } },
+      select: { totalAmount: true },
+    }),
+    prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        order: {
           createdAt: { gte: monthStart },
           status: { notIn: ['CANCELLED', 'RETURNED'] },
         },
-        select: { total: true, createdAt: true },
-        orderBy: { createdAt: 'asc' },
-      }),
-      prisma.order.findMany({
-        where: {
-          createdAt: { gte: lastMonthStart, lt: monthStart },
-          status: { notIn: ['CANCELLED', 'RETURNED'] },
-        },
-        select: { total: true },
-      }),
-      prisma.orderItem.groupBy({
-        by: ['productId'],
-        where: {
-          order: {
-            createdAt: { gte: monthStart },
-            status: { notIn: ['CANCELLED', 'RETURNED'] },
-          },
-        },
-        _sum: { quantity: true, totalPrice: true },
-        orderBy: { _sum: { totalPrice: 'desc' } },
-        take: 5,
-      }),
-      prisma.orderItem.aggregate({
-        where: { order: { status: { notIn: ['CANCELLED', 'RETURNED'] } } },
-        _sum: { quantity: true, totalPrice: true },
-      }),
-      prisma.orderItem.aggregate({
-        where: { order: { status: 'DELIVERED' } },
-        _sum: { quantity: true, totalPrice: true },
-      }),
-      prisma.purchase.aggregate({
-        where: { status: { not: 'CANCELLED' } },
-        _sum: { totalCost: true },
-      }),
-    ])
+      },
+      _sum: { quantity: true, totalPrice: true },
+      orderBy: { _sum: { totalPrice: 'desc' } },
+      take: 5,
+    }),
+    prisma.orderItem.aggregate({
+      where: { order: { status: { notIn: ['CANCELLED', 'RETURNED'] } } },
+      _sum: { quantity: true, totalPrice: true },
+    }),
+    prisma.orderItem.aggregate({
+      where: { order: { status: 'DELIVERED' } },
+      _sum: { quantity: true, totalPrice: true },
+    }),
+    prisma.productionCheckout.aggregate({ _sum: { totalAmount: true } }),
+    prisma.purchase.aggregate({
+      where: { status: { not: 'CANCELLED' } },
+      _sum: { totalCost: true },
+    }),
+    getSettings(),
+  ])
 
   // Enrich top products with names
   const productIds = topProducts.map((p) => p.productId)
@@ -69,35 +90,46 @@ export default async function AdminReportsPage() {
     revenue: Number(p._sum.totalPrice ?? 0),
   }))
 
-  // Chart data — group by day
-  const chartData = thisMonthOrders.reduce<
-    Array<{ name: string; revenue: number; orders: number }>
-  >((acc, o) => {
+  // Chart data — group by day, blending order revenue with production checkout revenue
+  const chartByDay = new Map<string, { revenue: number; orders: number }>()
+  for (const o of thisMonthOrders) {
     const day = String(o.createdAt.getDate())
-    const existing = acc.find((d) => d.name === day)
-    if (existing) {
-      existing.revenue += Number(o.total)
-      existing.orders += 1
-    } else {
-      acc.push({ name: day, revenue: Number(o.total), orders: 1 })
-    }
-    return acc
-  }, [])
+    const existing = chartByDay.get(day) ?? { revenue: 0, orders: 0 }
+    existing.revenue += Number(o.total)
+    existing.orders += 1
+    chartByDay.set(day, existing)
+  }
+  for (const c of thisMonthCheckouts) {
+    const day = String(c.checkedOutAt.getDate())
+    const existing = chartByDay.get(day) ?? { revenue: 0, orders: 0 }
+    existing.revenue += Number(c.totalAmount)
+    existing.orders += 1
+    chartByDay.set(day, existing)
+  }
+  const chartData = Array.from(chartByDay, ([name, d]) => ({ name, ...d })).sort(
+    (a, b) => Number(a.name) - Number(b.name)
+  )
 
-  // KPIs
-  const thisRevenue = thisMonthOrders.reduce((s, o) => s + Number(o.total), 0)
-  const lastRevenue = lastMonthOrders.reduce((s, o) => s + Number(o.total), 0)
+  // KPIs — a production checkout is a completed sale, counted the same as an order
+  const thisCheckoutRevenue = thisMonthCheckouts.reduce((s, c) => s + Number(c.totalAmount), 0)
+  const lastCheckoutRevenue = lastMonthCheckouts.reduce((s, c) => s + Number(c.totalAmount), 0)
+  const thisRevenue = thisMonthOrders.reduce((s, o) => s + Number(o.total), 0) + thisCheckoutRevenue
+  const lastRevenue = lastMonthOrders.reduce((s, o) => s + Number(o.total), 0) + lastCheckoutRevenue
   const revenueChange = lastRevenue > 0 ? ((thisRevenue - lastRevenue) / lastRevenue) * 100 : 0
+  const thisOrderCount = thisMonthOrders.length + thisMonthCheckouts.length
 
   const kpis = {
     revenue: thisRevenue,
-    orders: thisMonthOrders.length,
-    avgOrder: thisMonthOrders.length > 0 ? thisRevenue / thisMonthOrders.length : 0,
+    orders: thisOrderCount,
+    avgOrder: thisOrderCount > 0 ? thisRevenue / thisOrderCount : 0,
     revenueChange,
   }
 
-  const orderedRevenue = Number(orderedAgg._sum.totalPrice ?? 0)
-  const deliveredRevenue = Number(deliveredAgg._sum.totalPrice ?? 0)
+  // Production checkouts are already-completed sales, folded into both the
+  // ordered and delivered totals below (there's no separate "ordered" stage for them).
+  const checkoutRevenue = Number(checkoutAgg._sum.totalAmount ?? 0)
+  const orderedRevenue = Number(orderedAgg._sum.totalPrice ?? 0) + checkoutRevenue
+  const deliveredRevenue = Number(deliveredAgg._sum.totalPrice ?? 0) + checkoutRevenue
   const deliveredItems = deliveredAgg._sum.quantity ?? 0
   // ₱10 per unit, counted only once an order has actually been delivered,
   // deducted from item revenue rather than charged on top.
@@ -131,6 +163,7 @@ export default async function AdminReportsPage() {
         topProducts={topProductsData}
         kpis={kpis}
         fulfillment={fulfillment}
+        roi={settings.roi ?? {}}
       />
     </div>
   )

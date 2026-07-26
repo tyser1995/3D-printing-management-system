@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma/client'
 import { generateOrderNumber } from '@/lib/utils/format'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 interface OrderItemInput {
   productId: string
   quantity: number
@@ -31,6 +29,7 @@ export async function POST(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where: { id: { in: items.map((i) => i.productId) } },
+      select: { id: true, salePrice: true, basePrice: true },
     })
     if (products.length !== new Set(items.map((i) => i.productId)).size) {
       return NextResponse.json({ error: 'One or more products were not found' }, { status: 400 })

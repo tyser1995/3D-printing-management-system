@@ -1,7 +1,5 @@
 import { Printer } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
-
 export default function MaintenancePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#1A1A1A] px-4 text-center">

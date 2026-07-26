@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 // Supported product types the AI Lab can generate
 const SUPPORTED_TYPES = ['keychain', 'clicker', 'keycap', 'nameplate'] as const
 type ProductType = (typeof SUPPORTED_TYPES)[number]

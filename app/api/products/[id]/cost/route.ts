@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/client'
 import type { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
